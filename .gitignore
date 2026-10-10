@@ -1,0 +1,26 @@
+# Fichiers compiles
+*.class
+
+# Journaux
+*.log
+
+# Sorties de compilation NetBeans / Ant
+/build/
+/dist/
+/out/
+
+# Reglages IDE NetBeans personnels
+/nbproject/private/
+
+# Reglages IDE IntelliJ personnels
+.idea/workspace.xml
+.idea/shelf/
+.idea/queries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/httpRequests/
+.idea/usage.statistics.xml
+
+# Fichiers systeme
+.DS_Store
+Thumbs.db

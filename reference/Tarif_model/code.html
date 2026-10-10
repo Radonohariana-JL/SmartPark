@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-fixed":"#6ffbbe","tertiary-fixed-dim":"#4edea3","surface-dim":"#031427","on-primary-fixed":"#131b2e","on-tertiary":"#003824","tertiary-container":"#001c10","inverse-on-surface":"#213145","secondary-fixed":"#dbe1ff","on-surface":"#d3e4fe","primary":"#bec6e0","inverse-surface":"#d3e4fe","on-background":"#d3e4fe","on-primary-fixed-variant":"#3f465c","on-secondary-fixed":"#00174b","on-secondary-container":"#cdd7ff","on-surface-variant":"#c6c6cd","primary-fixed-dim":"#bec6e0","on-tertiary-container":"#009365","error-container":"#93000a","background":"#031427","surface-variant":"#26364a","surface-bright":"#2a3a4f","primary-fixed":"#dae2fd","on-tertiary-fixed":"#002113","surface":"#031427","on-error-container":"#ffdad6","secondary-fixed-dim":"#b4c5ff","surface-container-lowest":"#000f21","on-error":"#690005","primary-container":"#0f172a","secondary":"#b4c5ff","outline-variant":"#45464d","surface-container-highest":"#26364a","on-primary":"#283044","on-tertiary-fixed-variant":"#005236","surface-container-low":"#0b1c30","surface-container":"#102034","on-secondary-fixed-variant":"#003ea8","surface-tint":"#bec6e0","error":"#ffb4ab","surface-container-high":"#1b2b3f","on-primary-container":"#798098","secondary-container":"#0053db","inverse-primary":"#565e74","on-secondary":"#002a78","tertiary":"#4edea3","outline":"#909097"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{margin:"1rem","space-lg":"1rem","space-md":"0.75rem","space-sm":"0.5rem","space-xl":"1.5rem","space-xs":"0.25rem",gutter:"0.75rem"},fontFamily:{"headline-sm":["Space Grotesk"],"display-md":["Space Grotesk"],"body-sm":["Geist"],"display-lg":["Space Grotesk"],"body-lg":["Geist"],"telemetry-plate":["Space Grotesk"],"label-md":["Space Grotesk"],"label-sm":["Space Grotesk"],"headline-md":["Space Grotesk"],"body-md":["Geist"],"headline-lg":["Space Grotesk"]},fontSize:{"headline-sm":["14px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"600"}],"display-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"700"}],"body-sm":["11px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"400"}],"display-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"700"}],"body-lg":["15px",{lineHeight:"22px",letterSpacing:"0em",fontWeight:"400"}],"telemetry-plate":["18px",{lineHeight:"22px",letterSpacing:"0.1em",fontWeight:"700"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}],"label-sm":["10px",{lineHeight:"14px",letterSpacing:"0.08em",fontWeight:"700"}],"headline-md":["16px",{lineHeight:"24px",letterSpacing:"0em",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",letterSpacing:"0em",fontWeight:"400"}],"headline-lg":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-60 bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50 select-none"><div class="h-14 px-space-md flex items-center gap-space-sm border-b border-outline-variant/30 bg-surface-container-lowest"><div class="w-7 h-7 rounded bg-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-surface text-[18px]">local_parking</span></div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md tracking-wider text-on-surface uppercase truncate">SMARTPARK CONTROL</span><span class="font-label-sm text-label-sm text-outline tracking-widest font-mono">SYS-NODE // V3.8.4</span></div></div><div class="px-space-md py-space-xs bg-surface-container-lowest/70 border-b border-outline-variant/20 flex items-center justify-between"><span class="font-label-sm text-label-sm uppercase text-outline">NAVIGATION CONSOLE</span><span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span></div><nav class="flex-1 px-space-xs py-space-sm space-y-0.5 overflow-y-auto" data-active-classes="bg-secondary-container text-on-surface border-l-2 border-secondary font-headline-sm"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="proprietaires" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Propriétaires</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="vehicules" href="#"><span class="material-symbols-outlined text-[18px]">directions_car</span><span>Véhicules</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="entree" href="#"><span class="material-symbols-outlined text-[18px]">sensor_door</span><span>Entrée</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="sortie" href="#"><span class="material-symbols-outlined text-[18px]">save_as</span><span>Sortie</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="historique" href="#"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span>Historique</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-1.5 rounded transition-colors bg-secondary-container text-on-surface border-l-2 border-secondary font-headline-sm" data-path="tarifs" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Tarifs</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="parametres" href="#"><span class="material-symbols-outlined text-[18px]">settings_input_component</span><span>Paramètres</span></a></nav><div class="p-space-sm border-t border-outline-variant/30 bg-surface-container-lowest flex flex-col gap-space-xs"><div class="flex items-center justify-between px-space-xs py-1 rounded bg-surface-container-low border border-outline-variant/20"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="font-label-sm text-label-sm tracking-widest text-tertiary uppercase">ONLINE RT-SYNC</span></div><span class="font-label-sm text-label-sm text-outline font-mono">14ms</span></div><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-error hover:bg-error-container/30 hover:text-on-error-container transition-colors font-body-md text-body-md" data-path="deconnexion" href="#"><span class="material-symbols-outlined text-[18px]">logout</span><span>Déconnexion</span></a></div></aside><div class="pl-60 min-h-screen flex flex-col"><header class="fixed top-0 left-60 right-0 h-14 bg-surface-container-low/95 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-2 py-1 rounded bg-surface-container-lowest border border-outline-variant/30 font-mono"><span class="material-symbols-outlined text-tertiary text-[16px]">videocam</span><span class="font-label-sm text-label-sm text-outline uppercase">ANPR LANES:</span><span class="font-label-sm text-label-sm text-tertiary">4/4 ARMED</span></div><div class="flex items-center gap-space-xs px-2 py-1 rounded bg-surface-container-lowest border border-outline-variant/30 font-mono"><span class="material-symbols-outlined text-secondary text-[16px]">pie_chart</span><span class="font-label-sm text-label-sm text-outline uppercase">CAPACITÉ:</span><span class="font-label-sm text-label-sm text-on-surface font-semibold">87%</span><span class="font-label-sm text-label-sm text-outline">(432/500)</span></div><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2 text-outline text-[16px]">search</span><input class="w-64 h-8 pl-7 pr-space-sm bg-surface-container-lowest border border-outline-variant/30 rounded font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary" placeholder="Rechercher plaque, usager, badge..." type="text"/></div></div><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-low"></span></button><div class="h-6 w-px bg-outline-variant/30"></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-label-sm text-label-sm text-on-surface font-semibold uppercase leading-tight">Poste Contrôle Nord</span><span class="font-body-sm text-body-sm text-outline leading-tight">Opérateur Principal</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ring-1 ring-outline-variant/40"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full pt-14 bg-surface px-space-md py-space-md"><div class="flex flex-col w-full relative">
+<div class="flex flex-col gap-space-md select-none opacity-40 pointer-events-none filter blur-[1px]">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-[20px]">payments</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface">Grille Tarifaire du Stationnement</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-tertiary-container text-tertiary uppercase tracking-wider">Node-Tarif Active</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Configuration dynamique des taux horaires selon la catégorie du véhicule</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="px-space-sm py-1 rounded bg-surface-container-low flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">schedule</span>
+<span class="font-label-sm text-label-sm text-outline uppercase font-mono">Dernière MAJ: 24/10/2023 - 08:30</span>
+</div>
+<button class="flex items-center gap-1.5 px-space-md py-1.5 bg-secondary-container text-on-surface rounded font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Nouveau Tarif</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-space-md">
+<div class="bg-surface-container-low p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Tarif Référence Base</span>
+<span class="material-symbols-outlined text-[18px]">directions_car</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-display-lg text-on-surface font-mono">500</span>
+<span class="font-label-md text-label-md text-secondary">Ar / heure</span>
+</div>
+<div class="mt-2 text-outline font-body-sm text-body-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Catégorie B - Voitures citadines</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Deux-Roues</span>
+<span class="material-symbols-outlined text-[18px]">two_wheeler</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-display-lg text-on-surface font-mono">200</span>
+<span class="font-label-md text-label-md text-secondary">Ar / heure</span>
+</div>
+<div class="mt-2 text-outline font-body-sm text-body-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Catégorie A - Motos &amp; Scooters</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Poids Lourds</span>
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-display-lg text-on-surface font-mono">1 200</span>
+<span class="font-label-md text-label-md text-secondary">Ar / heure</span>
+</div>
+<div class="mt-2 text-outline font-body-sm text-body-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Catégorie C - Camions &amp; Bus</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Facturation Globale</span>
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-display-lg text-tertiary font-mono">428 500</span>
+<span class="font-label-md text-label-md text-outline">Ar / jour</span>
+</div>
+<div class="mt-2 text-outline font-body-sm text-body-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">north_east</span>
+<span class="text-tertiary font-semibold">+14.2%</span>
+<span>flux 24h</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded overflow-hidden flex flex-col">
+<div class="px-space-md py-space-sm bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm uppercase text-outline">TABLEAU DES CATÉGORIES D'ACCÈS</span>
+<span class="font-label-sm text-label-sm px-1.5 rounded bg-surface-container text-on-surface-variant font-mono">3 ITEMS</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-outline font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+<span>DEVISE: MGA (Ariary)</span>
+</div>
+</div>
+</div>
+<div class="w-full">
+<div class="grid grid-cols-12 px-space-md py-2 bg-surface-container-lowest text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<span class="col-span-1">CODE</span>
+<span class="col-span-3">TYPE VÉHICULE</span>
+<span class="col-span-2">PRIX PAR HEURE</span>
+<span class="col-span-2">GRÂCE INITIALE</span>
+<span class="col-span-2">STATUT RÈGLE</span>
+<span class="col-span-2 text-right">ACTIONS</span>
+</div>
+<div class="grid grid-cols-12 px-space-md py-space-sm items-center bg-surface-container font-body-md text-body-md text-on-surface">
+<span class="col-span-1 font-mono text-outline font-label-md text-label-md">TRF-01</span>
+<div class="col-span-3 flex items-center gap-space-sm">
+<div class="w-6 h-6 rounded bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]">two_wheeler</span>
+</div>
+<span class="font-semibold">Moto</span>
+</div>
+<span class="col-span-2 font-mono font-semibold">200 Ar / h</span>
+<span class="col-span-2 text-outline">15 min</span>
+<div class="col-span-2">
+<span class="px-1.5 py-0.5 rounded bg-tertiary-container text-tertiary font-label-sm text-label-sm uppercase">Actif</span>
+</div>
+<div class="col-span-2 flex justify-end gap-1">
+<span class="p-1 rounded bg-surface-container-highest text-outline"><span class="material-symbols-outlined text-[16px]">edit</span></span>
+</div>
+</div>
+<div class="grid grid-cols-12 px-space-md py-space-sm items-center bg-surface-container-highest font-body-md text-body-md text-on-surface">
+<span class="col-span-1 font-mono text-secondary font-label-md text-label-md">TRF-02</span>
+<div class="col-span-3 flex items-center gap-space-sm">
+<div class="w-6 h-6 rounded bg-secondary-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[16px]">directions_car</span>
+</div>
+<span class="font-semibold text-secondary">Voiture</span>
+</div>
+<span class="col-span-2 font-mono font-bold text-on-surface">500 Ar / h</span>
+<span class="col-span-2 text-outline">15 min</span>
+<div class="col-span-2">
+<span class="px-1.5 py-0.5 rounded bg-tertiary-container text-tertiary font-label-sm text-label-sm uppercase">Actif</span>
+</div>
+<div class="col-span-2 flex justify-end gap-1">
+<span class="p-1 rounded bg-secondary-container text-on-surface"><span class="material-symbols-outlined text-[16px]">edit</span></span>
+</div>
+</div>
+<div class="grid grid-cols-12 px-space-md py-space-sm items-center bg-surface-container font-body-md text-body-md text-on-surface">
+<span class="col-span-1 font-mono text-outline font-label-md text-label-md">TRF-03</span>
+<div class="col-span-3 flex items-center gap-space-sm">
+<div class="w-6 h-6 rounded bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[16px]">local_shipping</span>
+</div>
+<span class="font-semibold">Camion</span>
+</div>
+<span class="col-span-2 font-mono font-semibold">1 200 Ar / h</span>
+<span class="col-span-2 text-outline">10 min</span>
+<div class="col-span-2">
+<span class="px-1.5 py-0.5 rounded bg-tertiary-container text-tertiary font-label-sm text-label-sm uppercase">Actif</span>
+</div>
+<div class="col-span-2 flex justify-end gap-1">
+<span class="p-1 rounded bg-surface-container-highest text-outline"><span class="material-symbols-outlined text-[16px]">edit</span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 z-50 bg-surface-container-lowest/80 backdrop-blur-[2px] flex items-center justify-center p-space-md transition-opacity duration-150" id="modal-backdrop">
+<div aria-labelledby="dialog-title" aria-modal="true" class="w-full max-w-[480px] bg-surface-container-high rounded shadow-2xl flex flex-col overflow-hidden select-none" role="dialog">
+<div class="h-10 px-space-md bg-surface-container-highest flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-5 h-5 rounded bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-[14px]">edit</span>
+</div>
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold" id="dialog-title">Modifier le tarif</h2>
+<span class="font-mono text-outline font-label-sm text-label-sm">[JDialog:TRF_CFG]</span>
+</div>
+</div>
+<button aria-label="Fermer la fenêtre" class="w-7 h-7 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" id="btn-close-modal" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<form class="p-space-lg flex flex-col gap-space-md bg-surface-container-low" id="edit-rate-form" onsubmit="event.preventDefault();">
+<div class="flex flex-col gap-1.5">
+<label class="flex items-center justify-between font-label-md text-label-md text-outline uppercase tracking-wider" for="vehicle-type">
+<span>Type de véhicule</span>
+<span class="font-mono text-on-surface-variant text-body-sm font-normal">JComboBox &lt;Category&gt;</span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute left-2.5 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-[18px]" id="vehicle-icon">directions_car</span>
+</div>
+<select class="w-full h-10 pl-9 pr-9 bg-surface-container-lowest text-on-surface font-body-md text-body-md rounded appearance-none focus:outline-none focus:bg-surface-container transition-colors cursor-pointer" id="vehicle-type" name="vehicle_type">
+<option value="moto">Moto</option>
+<option selected="" value="voiture">Voiture</option>
+<option value="camion">Camion</option>
+</select>
+<div class="absolute right-2.5 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="flex items-center justify-between font-label-md text-label-md text-outline uppercase tracking-wider" for="hourly-price">
+<span>Prix par heure</span>
+<span class="font-mono text-on-surface-variant text-body-sm font-normal">JTextField [Numeric]</span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute left-2.5 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[18px]">price_change</span>
+</div>
+<input class="w-full h-10 pl-9 pr-24 bg-surface-container-lowest text-on-surface font-telemetry-plate text-telemetry-plate font-mono rounded focus:outline-none focus:bg-surface-container transition-colors" id="hourly-price" min="0" name="hourly_price" step="50" type="number" value="500"/>
+<div class="absolute right-2.5 px-2 py-0.5 rounded bg-surface-container text-secondary font-label-md text-label-md font-mono select-none">
+              Ar / h
+            </div>
+</div>
+</div>
+<div class="p-space-sm rounded bg-surface-container-lowest flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5">info</span>
+<p class="font-body-sm text-body-sm text-outline leading-tight">
+            Tarif appliqué au calcul du montant du stationnement. Les tickets en cours d'enregistrement dans les bornes ANPR adopteront immédiatement ce barème unitaire.
+          </p>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md h-9 rounded bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors font-headline-sm text-headline-sm flex items-center gap-1" id="btn-cancel-modal" type="button">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+<span>Annuler</span>
+</button>
+<button class="px-space-lg h-9 rounded bg-secondary-container hover:bg-primary-fixed-dim text-on-surface transition-colors font-headline-sm text-headline-sm flex items-center gap-1.5 shadow-sm active:translate-y-px" id="btn-save-modal" type="button">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Enregistrer</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const backdrop = document.getElementById('modal-backdrop');
+    const closeBtn = document.getElementById('btn-close-modal');
+    const cancelBtn = document.getElementById('btn-cancel-modal');
+    const saveBtn = document.getElementById('btn-save-modal');
+    const vehicleSelect = document.getElementById('vehicle-type');
+    const vehicleIcon = document.getElementById('vehicle-icon');
+    const priceInput = document.getElementById('hourly-price');
+
+    const iconMap = {
+      'moto': 'two_wheeler',
+      'voiture': 'directions_car',
+      'camion': 'local_shipping'
+    };
+
+    const defaultPrices = {
+      'moto': '200',
+      'voiture': '500',
+      'camion': '1200'
+    };
+
+    if (vehicleSelect && vehicleIcon) {
+      vehicleSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        vehicleIcon.textContent = iconMap[val] || 'directions_car';
+        if (defaultPrices[val] && priceInput) {
+          priceInput.value = defaultPrices[val];
+        }
+      });
+    }
+
+    const closeModal = () => {
+      if (backdrop) {
+        backdrop.classList.add('opacity-0');
+        setTimeout(() => {
+          backdrop.style.display = 'none';
+        }, 150);
+      }
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        saveBtn.classList.add('opacity-75');
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span><span>Sauvegarde...</span>';
+        setTimeout(() => {
+          closeModal();
+        }, 300);
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && backdrop && backdrop.style.display !== 'none') {
+        closeModal();
+      }
+    });
+  })();
+</script></main></div></body></html>

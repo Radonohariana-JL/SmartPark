@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"outline":"#909097","surface":"#031427","surface-container-low":"#0b1c30","secondary-fixed-dim":"#b4c5ff","inverse-surface":"#d3e4fe","tertiary-fixed":"#6ffbbe","surface-bright":"#2a3a4f","surface-tint":"#bec6e0","primary":"#bec6e0","on-surface":"#d3e4fe","on-error":"#690005","on-tertiary-fixed":"#002113","tertiary-container":"#001c10","tertiary-fixed-dim":"#4edea3","surface-variant":"#26364a","error-container":"#93000a","primary-container":"#0f172a","error":"#ffb4ab","surface-container-lowest":"#000f21","surface-container":"#102034","on-surface-variant":"#c6c6cd","surface-container-highest":"#26364a","on-background":"#d3e4fe","secondary-container":"#0053db","on-primary":"#283044","on-tertiary-container":"#009365","tertiary":"#4edea3","secondary-fixed":"#dbe1ff","secondary":"#b4c5ff","on-secondary-container":"#cdd7ff","on-secondary-fixed-variant":"#003ea8","surface-dim":"#031427","on-primary-fixed-variant":"#3f465c","background":"#031427","primary-fixed-dim":"#bec6e0","on-secondary":"#002a78","inverse-on-surface":"#213145","on-tertiary-fixed-variant":"#005236","outline-variant":"#45464d","on-secondary-fixed":"#00174b","primary-fixed":"#dae2fd","on-tertiary":"#003824","surface-container-high":"#1b2b3f","on-primary-container":"#798098","on-primary-fixed":"#131b2e","on-error-container":"#ffdad6","inverse-primary":"#565e74"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-sm":"0.5rem","space-lg":"1rem","gutter":"0.75rem","margin":"1rem","space-xl":"1.5rem","space-xs":"0.25rem","space-md":"0.75rem"},"fontFamily":{"body-md":["Geist"],"display-lg":["Space Grotesk"],"label-sm":["Space Grotesk"],"telemetry-plate":["Space Grotesk"],"display-md":["Space Grotesk"],"body-lg":["Geist"],"body-sm":["Geist"],"headline-md":["Space Grotesk"],"headline-lg":["Space Grotesk"],"label-md":["Space Grotesk"],"headline-sm":["Space Grotesk"]},"fontSize":{"body-md":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.08em","fontWeight":"700"}],"telemetry-plate":["18px",{"lineHeight":"22px","letterSpacing":"0.1em","fontWeight":"700"}],"display-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"700"}],"body-lg":["15px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"body-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-md":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}],"headline-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-sm":["14px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"600"}]}}}};</script></head><body class="bg-background font-body-md text-on-surface antialiased select-none"><aside class="fixed left-0 top-0 h-screen w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-14 px-space-md flex items-center gap-space-sm border-b border-outline-variant/20 bg-surface-container-lowest"><div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm"><span class="material-symbols-outlined text-[20px]">local_parking</span></div><div class="flex flex-col min-w-0 leading-none"><span class="font-headline-sm text-headline-sm uppercase tracking-wider text-on-surface truncate">SmartPark</span><span class="font-label-sm text-label-sm text-on-surface-variant font-mono uppercase tracking-widest text-[9px]">CONTROL / v3.8.4</span></div></div><div class="px-space-md py-space-xs"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider text-[9px]">Navigation Contrôle</span></div><nav class="flex flex-col gap-0.5 px-space-xs" data-active-classes="bg-surface-variant text-on-surface border-l-2 border-secondary-container font-headline-sm shadow-inner"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">space_dashboard</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="proprietaires" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Propriétaires</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="vehicules" href="#"><span class="material-symbols-outlined text-[18px]">directions_car</span><span>Véhicules</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="entree" href="#"><span class="material-symbols-outlined text-[18px]">login</span><span>Entrée</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="sortie" href="#"><span class="material-symbols-outlined text-[18px]">logout</span><span>Sortie</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="historique" href="#"><span class="material-symbols-outlined text-[18px]">manage_search</span><span>Historique</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="tarifs" href="#"><span class="material-symbols-outlined text-[18px]">payments</span><span>Tarifs</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md" data-path="parametres" href="#"><span class="material-symbols-outlined text-[18px]">settings_input_component</span><span>Paramètres</span></a></nav></div><div class="flex flex-col border-t border-outline-variant/20 bg-surface-container-lowest/80"><div class="px-space-md py-space-sm flex items-center justify-between"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">Online</span></div><span class="font-label-sm text-label-sm text-outline font-mono">RT-SYNC</span></div><a class="flex items-center gap-space-sm mx-space-xs mb-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-error-container hover:text-on-error transition-colors font-body-md text-body-md border border-outline-variant/15" data-path="deconnexion" href="#"><span class="material-symbols-outlined text-[18px] text-error">power_settings_new</span><span class="text-error">Déconnexion</span></a></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-14 bg-surface-container-low/95 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-2 px-space-sm py-1 bg-surface-container-lowest border border-outline-variant/30 rounded"><span class="material-symbols-outlined text-tertiary text-[14px]">videocam</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase">ANPR LANES:</span><span class="font-label-sm text-label-sm text-tertiary font-mono font-bold">4/4 ACTIVE</span></div><div class="flex items-center gap-2 px-space-sm py-1 bg-surface-container-lowest border border-outline-variant/30 rounded"><span class="material-symbols-outlined text-secondary text-[14px]">grid_view</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase">CAPACITÉ:</span><span class="font-label-sm text-label-sm text-secondary font-mono font-bold">87% (432/500)</span></div><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2.5 text-on-surface-variant text-[16px]">search</span><input class="bg-surface-container-lowest text-on-surface placeholder:text-outline text-body-sm font-body-sm pl-8 pr-3 py-1.5 h-8 w-64 rounded border border-outline-variant/40 focus:border-secondary-container focus:outline-none transition-colors" placeholder="Rechercher plaque, usager..." type="search"/></div></div><div class="flex items-center gap-space-md"><button class="w-8 h-8 rounded bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">filter_list</span></button><button class="w-8 h-8 rounded bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors relative" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="w-2 h-2 bg-error rounded-full absolute top-1.5 right-1.5"></span></button><div class="h-6 w-px bg-outline-variant/30"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right leading-none"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold text-[13px]">Poste Contrôle Nord</span><span class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Opérateur Principal</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-inner"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-14 w-full px-8 bg-surface min-h-screen"><div class="flex flex-col w-full py-space-lg">
+<div class="flex flex-col gap-1 mb-space-lg">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-mono">POSTE ACCÈS // VOIE 01</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">STATUT: PRÊT</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Enregistrer une entrée</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Enregistrez l'arrivée d'un véhicule et attribuez-lui une place disponible.</p>
+</div>
+<div class="w-full max-w-5xl mx-auto flex flex-col bg-surface-container-low rounded-lg shadow-xl overflow-hidden">
+<div class="bg-surface-container px-space-lg py-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[18px]">confirmation_number</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Nouveau ticket d'entrée</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-mono">FORMULAIRE OPERATEUR #TK-ENT-2023-882</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-lowest px-space-sm py-1 rounded">
+<span class="material-symbols-outlined text-tertiary text-[16px]">sensors</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Boucle sol:</span>
+<span class="font-label-sm text-label-sm text-tertiary font-mono">DÉTECTÉE</span>
+</div>
+</div>
+<div class="p-space-lg flex flex-col gap-space-xl">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-lg">
+<div class="md:col-span-7 flex flex-col gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="vehicleSelect">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">directions_car</span>
+                Véhicule (Immatriculation / Modèle)
+              </span>
+<span class="font-label-sm text-label-sm text-outline font-mono">REQUIS [JComboBox]</span>
+</label>
+<div class="relative">
+<select class="w-full h-9 bg-surface-container-lowest text-on-surface font-body-md text-body-md pl-3 pr-8 rounded appearance-none cursor-pointer focus:outline-none focus:bg-surface-container transition-colors" id="vehicleSelect">
+<option disabled="" selected="" value="">Sélectionner un véhicule enregistré...</option>
+<option data-brand="Peugeot 208" data-color="Gris Anthracite" data-owner="Sophie Martin" data-plate="AA-229-AA" data-type="Abonné Standard" value="v1">AA-229-AA — Peugeot 208 (Sophie Martin)</option>
+<option data-brand="Tesla Model 3" data-color="Blanc Nacré" data-owner="Alexandre Dupont" data-plate="CJ-451-KZ" data-type="Abonné Électrique" value="v2">CJ-451-KZ — Tesla Model 3 (Alexandre Dupont)</option>
+<option data-brand="Renault Clio V" data-color="Bleu Nuit" data-owner="Marc Lefevre" data-plate="GH-882-RT" data-type="Visiteur Pro" value="v3">GH-882-RT — Renault Clio V (Marc Lefevre)</option>
+<option data-brand="Volkswagen Golf" data-color="Noir Métallisé" data-owner="Hélène Roy" data-plate="KL-019-MM" data-type="Abonné Résident" value="v4">KL-019-MM — Volkswagen Golf (Hélène Roy)</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">info</span>
+              Seuls les véhicules enregistrés dans la base apparaissent ici.
+            </p>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface flex items-center gap-1.5" for="spotSelect">
+<span class="material-symbols-outlined text-[16px] text-tertiary">local_parking</span>
+                Place de parking
+              </label>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-tertiary-container text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-sm text-label-sm uppercase font-mono">68 DISPONIBLES</span>
+</div>
+</div>
+<div class="relative">
+<select class="w-full h-9 bg-surface-container-lowest text-on-surface font-body-md text-body-md pl-3 pr-8 rounded appearance-none cursor-pointer focus:outline-none focus:bg-surface-container transition-colors" id="spotSelect">
+<option disabled="" selected="" value="">Choisir une place disponible...</option>
+<optgroup class="bg-surface-container-high text-on-surface" label="NIVEAU -1 (Standard)">
+<option data-floor="Niveau -1" data-spot="P-101" data-type="Standard" data-zone="Zone Bleue" value="p-101">Place P-101 (Niveau -1, Proche Accès A)</option>
+<option data-floor="Niveau -1" data-spot="P-104" data-type="Standard" data-zone="Zone Bleue" value="p-104">Place P-104 (Niveau -1, Standard)</option>
+<option data-floor="Niveau -1" data-spot="P-109" data-type="Standard" data-zone="Zone Jaune" value="p-109">Place P-109 (Niveau -1, Allée Centrale)</option>
+</optgroup>
+<optgroup class="bg-surface-container-high text-on-surface" label="NIVEAU -1 (Bornes Recharge)">
+<option data-floor="Niveau -1" data-spot="E-112" data-type="Recharge 22kW" data-zone="Zone Verte" value="e-112">Place E-112 [EV-CHARGER 22kW]</option>
+<option data-floor="Niveau -1" data-spot="E-115" data-type="Recharge 22kW" data-zone="Zone Verte" value="e-115">Place E-115 [EV-CHARGER 22kW]</option>
+</optgroup>
+<optgroup class="bg-surface-container-high text-on-surface" label="NIVEAU -2">
+<option data-floor="Niveau -2" data-spot="P-202" data-type="Standard Large" data-zone="Zone Orange" value="p-202">Place P-202 (Niveau -2, Large)</option>
+<option data-floor="Niveau -2" data-spot="P-218" data-type="Standard" data-zone="Zone Orange" value="p-218">Place P-218 (Niveau -2, Standard)</option>
+</optgroup>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline">Attribution selon le gabarit et abonnement du véhicule.</p>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface flex items-center gap-1.5" for="dateField">
+<span class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+                Date et heure d'entrée
+              </label>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="font-label-sm text-label-sm font-mono text-outline">HORLOGE SYSTÈME NTP</span>
+</div>
+</div>
+<div class="relative flex items-center">
+<div class="absolute left-3 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[16px]">lock_clock</span>
+</div>
+<input class="w-full h-9 bg-surface-container-lowest/60 text-secondary-fixed font-headline-sm text-headline-sm pl-9 pr-3 rounded cursor-not-allowed select-text font-mono" id="dateField" readonly="" type="text" value="24/10/2023 14:32:18"/>
+</div>
+<p class="font-body-sm text-body-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">verified_user</span>
+              Timestamp certifié non modifiable manuellement.
+            </p>
+</div>
+</div>
+<div class="md:col-span-5 flex flex-col gap-space-md">
+<div class="flex-1 bg-surface-container p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">badge</span>
+                Détails du véhicule
+              </span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-mono" id="vehicleStatePill">NON SÉLECTIONNÉ</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-center py-6 px-4 bg-surface-container-lowest rounded" id="vehicleEmptyState">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center text-outline mb-2">
+<span class="material-symbols-outlined text-[22px]">car_tag</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Veuillez sélectionner un véhicule pour afficher ses caractéristiques.</p>
+<span class="font-label-sm text-label-sm text-outline mt-1 font-mono">DONNÉES FICHIER CLIENT</span>
+</div>
+<div class="hidden flex-1 flex flex-col gap-2 p-3 bg-surface-container-lowest rounded" id="vehiclePopulatedState">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase">IMMATRICULATION</span>
+<span class="px-2 py-0.5 bg-surface rounded text-on-surface font-telemetry-plate text-telemetry-plate font-mono tracking-wider" id="cardPlate">--</span>
+</div>
+<div class="flex justify-between items-center py-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Modèle :</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold" id="cardModel">--</span>
+</div>
+<div class="flex justify-between items-center py-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Titulaire :</span>
+<span class="font-body-md text-body-md text-on-surface" id="cardOwner">--</span>
+</div>
+<div class="flex justify-between items-center py-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Catégorie :</span>
+<span class="font-label-md text-label-md px-1.5 py-0.5 rounded bg-surface-container-high text-secondary" id="cardType">--</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container p-space-md rounded flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">location_on</span>
+                Emplacement sélectionné
+              </span>
+<span class="font-label-sm text-label-sm text-outline font-mono">RÉSERVATION</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded" id="spotEmptyBadge">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]">block</span>
+<span class="font-body-md text-body-md text-outline">Aucune place attribuée</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-mono">EN ATTENTE</span>
+</div>
+<div class="hidden flex items-center justify-between p-3 bg-surface-container-lowest rounded" id="spotPopulatedBadge">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-tertiary-container flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight font-mono" id="spotIdDisplay">P-000</span>
+<span class="font-body-sm text-body-sm text-tertiary" id="spotZoneDisplay">Zone Inconnue</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-1 rounded bg-surface-container-high text-secondary font-mono" id="spotTypeBadge">STANDARD</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container px-space-lg py-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">keyboard</span>
+<span>Raccourcis clavier : <strong>[Entrée]</strong> Valider | <strong>[Échap]</strong> Annuler</span>
+</div>
+<div class="flex items-center gap-space-md">
+<button class="px-space-md h-9 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5 cursor-pointer" id="cancelBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+          Annuler
+        </button>
+<button class="px-space-lg h-9 rounded bg-secondary-container text-on-secondary-container font-label-md text-label-md uppercase tracking-wider transition-all flex items-center gap-2 cursor-not-allowed opacity-50 shadow-sm" disabled="" id="submitBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">arrow_circle_right</span>
+          Enregistrer l'entrée
+        </button>
+</div>
+</div>
+</div>
+<div class="fixed bottom-6 right-6 hidden bg-surface-container-highest text-on-surface p-space-md rounded-lg shadow-2xl flex items-center gap-3 z-50" id="toastNotification">
+<div class="w-8 h-8 rounded bg-tertiary-container text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Ticket validé avec succès</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono" id="toastDetails">Barrière ouverte // Voie 01</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const vehicleSelect = document.getElementById('vehicleSelect');
+    const spotSelect = document.getElementById('spotSelect');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    const vehicleEmpty = document.getElementById('vehicleEmptyState');
+    const vehiclePopulated = document.getElementById('vehiclePopulatedState');
+    const vehiclePill = document.getElementById('vehicleStatePill');
+
+    const cardPlate = document.getElementById('cardPlate');
+    const cardModel = document.getElementById('cardModel');
+    const cardOwner = document.getElementById('cardOwner');
+    const cardType = document.getElementById('cardType');
+
+    const spotEmpty = document.getElementById('spotEmptyBadge');
+    const spotPopulated = document.getElementById('spotPopulatedBadge');
+    const spotIdDisplay = document.getElementById('spotIdDisplay');
+    const spotZoneDisplay = document.getElementById('spotZoneDisplay');
+    const spotTypeBadge = document.getElementById('spotTypeBadge');
+
+    const toast = document.getElementById('toastNotification');
+    const toastDetails = document.getElementById('toastDetails');
+
+    function checkFormValidity() {
+      const vehicleValid = vehicleSelect.value !== '';
+      const spotValid = spotSelect.value !== '';
+
+      if (vehicleValid && spotValid) {
+        submitBtn.removeAttribute('disabled');
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.classList.add('cursor-pointer', 'hover:brightness-110');
+      } else {
+        submitBtn.setAttribute('disabled', 'disabled');
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitBtn.classList.remove('cursor-pointer', 'hover:brightness-110');
+      }
+    }
+
+    vehicleSelect.addEventListener('change', function() {
+      const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        vehicleEmpty.classList.add('hidden');
+        vehiclePopulated.classList.remove('hidden');
+
+        cardPlate.textContent = selectedOption.getAttribute('data-plate');
+        cardModel.textContent = selectedOption.getAttribute('data-brand');
+        cardOwner.textContent = selectedOption.getAttribute('data-owner');
+        cardType.textContent = selectedOption.getAttribute('data-type');
+
+        vehiclePill.textContent = 'ACTIF';
+        vehiclePill.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+        vehiclePill.classList.add('bg-tertiary-container', 'text-tertiary');
+      }
+      checkFormValidity();
+    });
+
+    spotSelect.addEventListener('change', function() {
+      const selectedOption = spotSelect.options[spotSelect.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        spotEmpty.classList.add('hidden');
+        spotPopulated.classList.remove('hidden');
+
+        spotIdDisplay.textContent = selectedOption.getAttribute('data-spot');
+        spotZoneDisplay.textContent = selectedOption.getAttribute('data-floor') + ' • ' + selectedOption.getAttribute('data-zone');
+        spotTypeBadge.textContent = selectedOption.getAttribute('data-type');
+      }
+      checkFormValidity();
+    });
+
+    cancelBtn.addEventListener('click', function() {
+      vehicleSelect.selectedIndex = 0;
+      spotSelect.selectedIndex = 0;
+
+      vehicleEmpty.classList.remove('hidden');
+      vehiclePopulated.classList.add('hidden');
+      vehiclePill.textContent = 'NON SÉLECTIONNÉ';
+      vehiclePill.classList.remove('bg-tertiary-container', 'text-tertiary');
+      vehiclePill.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+
+      spotEmpty.classList.remove('hidden');
+      spotPopulated.classList.add('hidden');
+
+      checkFormValidity();
+    });
+
+    submitBtn.addEventListener('click', function() {
+      if (submitBtn.disabled) return;
+      const plate = cardPlate.textContent;
+      const spot = spotIdDisplay.textContent;
+
+      toastDetails.textContent = plate + ' assigné à ' + spot + ' // Barrière Levée';
+      toast.classList.remove('hidden');
+
+      setTimeout(function() {
+        toast.classList.add('hidden');
+        cancelBtn.click();
+      }, 4000);
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        cancelBtn.click();
+      } else if (e.key === 'Enter' && !submitBtn.disabled) {
+        submitBtn.click();
+      }
+    });
+  })();
+</script></main></div></body></html>

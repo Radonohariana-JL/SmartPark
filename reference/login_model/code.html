@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_blank" name="shell-type"/>
+<title>SmartPark — Connexion au poste de contrôle</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "sp-dark": "#0F172A",
+            "sp-blue": "#2563EB",
+            "sp-cyan": "#06B6D4",
+            "sp-bg": "#031427",
+            "sp-light": "#F8FAFC",
+            "surface-container-lowest": "#000f21",
+            "surface": "#031427"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "body": ["Geist", "sans-serif"],
+            "telemetry": ["Space Grotesk", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-[#031427] font-body text-slate-100 antialiased min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+<main class="w-full max-w-5xl flex flex-col items-center">
+<!-- Top Telemetry Micro-Bar -->
+<div class="w-full flex items-center justify-between px-2 pb-2.5 text-xs text-slate-400 font-telemetry tracking-wider uppercase opacity-80">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span class="text-slate-300 font-medium tracking-wide">STATION DE SUPERVISION // TERMINAL-01</span>
+</div>
+<div class="hidden sm:flex items-center gap-3">
+<span class="text-slate-400">LATENCE : <strong class="text-emerald-400 font-semibold">18ms</strong></span>
+<span>•</span>
+<span class="text-slate-300">SERVEUR CENTRAL : ANTANANARIVO</span>
+</div>
+</div>
+<!-- Main Container: Split-Screen Layout (facilement transposable Java Swing 1x2 GridLayout / JPanel) -->
+<div class="w-full grid grid-cols-1 lg:grid-cols-12 bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-800/20">
+<!-- ============================================== -->
+<!-- GAUCHE : Panneau Visuel & Données Temps Réel   -->
+<!-- ============================================== -->
+<section class="lg:col-span-6 bg-[#0F172A] text-white p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
+<!-- Fond décoratif avec halo subtil -->
+<div class="absolute -top-24 -left-24 w-72 h-72 bg-[#2563EB]/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-24 -right-24 w-72 h-72 bg-[#06B6D4]/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-25 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-6">
+<!-- Logo & En-tête marque -->
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3.5">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#06B6D4] flex items-center justify-center shadow-lg shadow-blue-500/20">
+<span class="material-symbols-outlined text-white text-2xl font-bold">local_parking</span>
+</div>
+<div>
+<span class="font-headline font-bold text-2xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#06B6D4] bg-clip-text text-transparent">
+                  SmartPark
+                </span>
+<span class="block text-xs font-medium text-slate-400 tracking-wide">Édition Entreprise</span>
+</div>
+</div>
+<!-- Badge État Système -->
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wide font-telemetry">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              SYSTÈME OPÉRATIONNEL
+            </span>
+</div>
+<!-- Accroche principale & sous-titre -->
+<div class="mt-2">
+<h2 class="text-xl lg:text-2xl font-headline font-bold leading-snug text-slate-100">
+              Système centralisé de gestion &amp; contrôle d'accès
+            </h2>
+<p class="text-sm text-slate-400 mt-2 leading-relaxed font-body">
+              Surveillance télémétrique en temps réel, gestion automatisée des barrières d'accès et traçabilité des flux de véhicules.
+            </p>
+</div>
+<!-- Carte Données Temps Réel du Parking -->
+<div class="bg-slate-900/80 rounded-xl p-5 border border-slate-700/60 shadow-inner backdrop-blur-sm space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-slate-800">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#06B6D4] text-lg">analytics</span>
+<span class="text-xs font-bold uppercase tracking-wider text-slate-300 font-telemetry">Télémétrie Parking en Direct</span>
+</div>
+<span class="text-[11px] text-cyan-400 font-telemetry bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">LIVE SYNC</span>
+</div>
+<!-- Métriques Clés -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-slate-800/60 p-3 rounded-lg border border-slate-700/40">
+<span class="text-xs text-slate-400 block font-medium">Taux d'occupation</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-2xl font-bold font-telemetry text-white">52%</span>
+<span class="text-[11px] text-emerald-400 font-medium flex items-center">
+<span class="material-symbols-outlined text-xs">trending_flat</span> Fluide
+                  </span>
+</div>
+<!-- Mini jauge visuelle -->
+<div class="w-full bg-slate-700 h-1.5 rounded-full mt-2.5 overflow-hidden">
+<div class="bg-gradient-to-r from-[#2563EB] to-[#06B6D4] h-full rounded-full" style="width: 52%;"></div>
+</div>
+</div>
+<div class="bg-slate-800/60 p-3 rounded-lg border border-slate-700/40">
+<span class="text-xs text-slate-400 block font-medium">Places Disponibles</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="text-2xl font-bold font-telemetry text-[#06B6D4]">142</span>
+<span class="text-xs text-slate-400 font-telemetry">/ 300</span>
+</div>
+<span class="text-[11px] text-slate-400 block mt-2">Niveau RDC &amp; Étage 1</span>
+</div>
+</div>
+<!-- Statuts Rapides des Barrières & Surveillance -->
+<div class="grid grid-cols-2 gap-2 pt-1 text-xs text-slate-300">
+<div class="flex items-center gap-2 bg-slate-800/40 px-2.5 py-1.5 rounded border border-slate-700/30">
+<span class="material-symbols-outlined text-sm text-[#06B6D4]">traffic</span>
+<span>Barrière Entrée : <strong class="text-emerald-400 font-semibold">Active</strong></span>
+</div>
+<div class="flex items-center gap-2 bg-slate-800/40 px-2.5 py-1.5 rounded border border-slate-700/30">
+<span class="material-symbols-outlined text-sm text-[#2563EB]">videocam</span>
+<span>Vidéosurveillance : <strong class="text-emerald-400 font-semibold">8/8 OK</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bas volet gauche : Note Sécurité & Télémétrie -->
+<div class="relative z-10 pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-slate-500">lock_clock</span>
+<span>Chiffrement AES-256 bits</span>
+</div>
+<span class="font-telemetry text-slate-500">CAN-BUS v2.4</span>
+</div>
+</section>
+<!-- ============================================== -->
+<!-- DROITE : Carte Formulaire Moderne & Épurée    -->
+<!-- ============================================== -->
+<section class="lg:col-span-6 bg-[#FFFFFF] text-slate-800 p-8 lg:p-10 flex flex-col justify-between">
+<div>
+<!-- En-tête formulaire -->
+<div class="space-y-2">
+<!-- Badge sélection poste -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+<span class="material-symbols-outlined text-sm text-[#2563EB]">desktop_windows</span>
+<span>Poste de contrôle #01 — Entrée Principale</span>
+</div>
+<h1 class="text-2xl lg:text-3xl font-headline font-bold tracking-tight text-slate-900 pt-1">
+              Connexion au poste
+            </h1>
+<p class="text-sm text-slate-500 font-body">
+              Connectez-vous pour gérer votre parking et piloter les accès.
+            </p>
+</div>
+<!-- Formulaire de connexion -->
+<form class="mt-8 space-y-5" onsubmit="event.preventDefault(); triggerAuth();">
+<!-- Champ Identifiant / E-mail -->
+<div class="space-y-1.5">
+<label class="block text-xs font-semibold uppercase tracking-wider text-slate-700" for="email">
+                Identifiant / Adresse e-mail
+              </label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-slate-400 text-xl pointer-events-none select-none">
+                  badge
+                </span>
+<input autocomplete="username" class="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm font-medium placeholder:text-slate-400 transition-all focus:bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20" id="email" placeholder="admin@smartpark.mg" required="" type="text" value="admin@smartpark.mg"/>
+</div>
+</div>
+<!-- Champ Mot de passe -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block text-xs font-semibold uppercase tracking-wider text-slate-700" for="password">
+                  Mot de passe
+                </label>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Requis
+                </span>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-slate-400 text-xl pointer-events-none select-none">
+                  lock
+                </span>
+<input autocomplete="current-password" class="w-full h-11 pl-11 pr-11 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm font-medium placeholder:text-slate-400 transition-all focus:bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20" id="password" placeholder="••••••••••••" required="" type="password" value="SuperSecretPassword!"/>
+<button aria-label="Afficher ou masquer le mot de passe" class="absolute right-3 text-slate-400 hover:text-slate-700 p-1 rounded transition-colors focus:outline-none" id="toggle-pwd-btn" onclick="togglePasswordVisibility()" type="button">
+<span class="material-symbols-outlined text-xl" id="pwd-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Alerte de validation/erreur (masquée par défaut) -->
+<div class="hidden items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-xs font-medium text-red-700" id="auth-alert">
+<span class="material-symbols-outlined text-base">error</span>
+<span id="auth-alert-text">Identifiants invalides ou poste non autorisé.</span>
+</div>
+<!-- Bouton de soumission principal -->
+<div class="pt-2">
+<button class="w-full h-11 bg-[#2563EB] hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold tracking-wide uppercase rounded-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:shadow-blue-500/25 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2563EB] cursor-pointer" id="submit-btn" type="submit">
+<span>Se connecter</span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Bas volet droit : Version & État Base de Données -->
+<div class="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="font-medium text-slate-600">SmartPark Desktop v4.2 • PostgreSQL Connecté</span>
+</div>
+<span class="font-telemetry text-slate-400">POOL: 12/12</span>
+</div>
+</section>
+</div>
+<!-- Terminal Footer Metadata -->
+<div class="w-full flex items-center justify-between text-xs text-slate-400 font-telemetry px-2 pt-3 opacity-70">
+<span>SMARTPARK SECURITY PROTOCOL — ACCÈS STRICTEMENT RÉSERVÉ</span>
+<span>BUILD #4.2.1-RELEASE</span>
+</div>
+</main>
+<script>
+    function togglePasswordVisibility() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('pwd-icon');
+      if (!input || !icon) return;
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    function triggerAuth() {
+      const email = document.getElementById('email');
+      const pwd = document.getElementById('password');
+      const submitBtn = document.getElementById('submit-btn');
+      const alertBox = document.getElementById('auth-alert');
+
+      if (!email || !pwd || !submitBtn) return;
+
+      const originalContent = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-85');
+      submitBtn.innerHTML = `
+        <span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+        <span>Authentification en cours...</span>
+      `;
+
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-85');
+        submitBtn.innerHTML = originalContent;
+
+        if (email.value.trim() && pwd.value.trim()) {
+          if (alertBox) alertBox.classList.add('hidden');
+          // Simulation d'une session réussie
+          submitBtn.classList.replace('bg-[#2563EB]', 'bg-emerald-600');
+          submitBtn.innerHTML = `
+            <span class="material-symbols-outlined text-lg">check_circle</span>
+            <span>Session ouverte</span>
+          `;
+          setTimeout(() => {
+            submitBtn.classList.replace('bg-emerald-600', 'bg-[#2563EB]');
+            submitBtn.innerHTML = originalContent;
+          }, 1800);
+        } else {
+          if (alertBox) alertBox.classList.remove('hidden');
+        }
+      }, 700);
+    }
+  </script>
+</body></html>
