@@ -42,6 +42,8 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import model.Stationnement;
 import model.Vehicule;
+import util.Devise;
+import util.NotificationCentre;
 
 /**
  * Enregistre la sortie d'un vehicule : calcule la duree et le montant,
@@ -883,6 +885,15 @@ public class SortieForm extends JPanel {
         afficherDetail();
     }
 
+    /**
+     * Recharge la liste des stationnements en cours depuis la base. Appele par
+     * le Dashboard a l'ouverture de la page afin que les entrees enregistrees
+     * ailleurs apparaissent immediatement.
+     */
+    public void rafraichir() {
+        actualiser();
+    }
+
     private Stationnement getSelection() {
         return (Stationnement) comboStationnement.getSelectedItem();
     }
@@ -961,11 +972,11 @@ public class SortieForm extends JPanel {
         double duree = calculeDuree(s);
         double prix = tarifDAO.getPrixHeure(s.getTypeVehicule());
         lblDuree.setText(formaterDuree(duree));
-        lblTarif.setText(nombre(prix) + " Ar / h");
+        lblTarif.setText(Devise.formater(prix) + " / h");
         lblNoteTarif.setText("Tarif " + valeur(s.getTypeVehicule()));
-        lblMontant.setText(s.getMontant() + " Ar");
+        lblMontant.setText(Devise.formater(s.getMontant()));
         lblNoteCalcul.setText("Calculé automatiquement ("
-                + formaterDuree(duree) + " @ " + nombre(prix) + " Ar/h)");
+                + formaterDuree(duree) + " @ " + Devise.formater(prix) + "/h)");
 
         lblStatut.setText("EN COURS");
         lblStatut.setForeground(VERT);
@@ -990,9 +1001,10 @@ public class SortieForm extends JPanel {
         ResultatOperation res = stationnementDAO.terminer(s, prix);
 
         if (res.estSucces()) {
+            NotificationCentre.sortie(s.getImmatriculation(), res.getMontant());
             JOptionPane.showMessageDialog(this,
                     "Sortie enregistree : " + s.getImmatriculation()
-                            + " - montant " + res.getMontant() + " Ar.");
+                            + " - montant " + Devise.formater(res.getMontant()) + ".");
             actualiser();
         } else {
             JOptionPane.showMessageDialog(this, res.getMessage());

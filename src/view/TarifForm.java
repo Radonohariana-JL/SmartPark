@@ -58,7 +58,7 @@ public class TarifForm extends JPanel {
     private static final int COL_ACTION = 3;
 
     private final DefaultTableModel modeleTable = new DefaultTableModel(
-            new String[]{"#", "Catégorie de véhicule", "Prix par heure (Ar)", "Action"}, 0) {
+            new String[]{"#", "Catégorie de véhicule", "Prix par heure (" + util.Devise.symbole() + ")", "Action"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             // Seule la colonne "Action" (bouton de ligne) accepte l'edition.
@@ -368,14 +368,14 @@ public class TarifForm extends JPanel {
             // Prix par heure.
             g.gridy = 3;
             g.insets = new Insets(16, 0, 0, 0);
-            carte.add(libelle("Prix par heure (Ar)"), g);
+            carte.add(libelle("Prix par heure (" + util.Devise.symbole() + ")"), g);
 
             g.gridy = 4;
             g.insets = new Insets(6, 0, 0, 0);
             champPrix.setText(formatPrix(prixActuel));
             styleChamp(champPrix);
             champPrix.setPreferredSize(new Dimension(220, 36));
-            JLabel suffixe = new JLabel("Ar / h");
+            JLabel suffixe = new JLabel(util.Devise.symbole() + " / h");
             suffixe.setFont(police(Font.BOLD, 13));
             suffixe.setForeground(TEXTE_SECONDAIRE);
             suffixe.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));

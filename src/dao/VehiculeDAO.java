@@ -80,6 +80,42 @@ public class VehiculeDAO {
         }
     }
 
+    /**
+     * Insere un vehicule et retourne l'identifiant genere (ou -1 en cas
+     * d'echec). Utilise par la creation rapide depuis la page Entree afin de
+     * selectionner immediatement le vehicule cree.
+     */
+    public int ajouterAvecId(Vehicule v) {
+        String sql = "INSERT INTO vehicule (immatriculation, marque, couleur, type_vehicule, id_proprietaire) "
+                + "VALUES (?, ?, ?, ?, ?)";
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return -1;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql,
+                    java.sql.Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, v.getImmatriculation());
+                ps.setString(2, v.getMarque());
+                ps.setString(3, v.getCouleur());
+                ps.setString(4, v.getTypeVehicule());
+                ps.setInt(5, v.getIdProprietaire());
+                if (ps.executeUpdate() != 1) {
+                    return -1;
+                }
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int id = rs.getInt(1);
+                        v.setIdVehicule(id);
+                        return id;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur VehiculeDAO.ajouterAvecId : " + e.getMessage());
+        }
+        return -1;
+    }
+
     /** Vrai si la modification a touche exactement une ligne. */
     public boolean modifier(Vehicule v) {
         String sql = "UPDATE vehicule SET immatriculation = ?, marque = ?, couleur = ?, "

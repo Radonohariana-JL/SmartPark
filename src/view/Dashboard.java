@@ -18,6 +18,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
@@ -33,15 +35,24 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import dao.PlaceDAO;
 import dao.StationnementDAO;
 import model.Stationnement;
 import model.Utilisateur;
+import util.Devise;
+import util.I18n;
+import util.NotificationCentre;
+import util.Theme;
 
 /**
  * Fenetre principale de SmartPark.
@@ -76,6 +87,11 @@ public class Dashboard extends JFrame {
     private JLabel labelConnecte;
     private JLabel labelNomEntete;
     private PastilleUtilisateur pastilleUtilisateur;
+    private JLabel labelDateEntete;
+    private JPanel chipUtilisateur;
+    private BoutonNotifications boutonNotifications;
+    private BoutonMenu boutonDeconnexion;
+    private JLabel labelSousTitreMenu;
 
     // Groupe "Stationnement" du menu (sous-menu deroulant Entree / Sortie).
     private JPanel nav;
@@ -98,6 +114,7 @@ public class Dashboard extends JFrame {
     private JLabel labelTotal;
     private JLabel labelMoyenne;
     private JLabel labelPic;
+    private JLabel labelLegendeRecette;
     private PanneauJournal journal;
 
     // ---------------------------------------------------------------------
@@ -112,24 +129,49 @@ public class Dashboard extends JFrame {
     private static final Color MENU_DECO_SURVOL = new Color(0xDC2626);
 
     // ---------------------------------------------------------------------
-    // PALETTE CONTENU (clair)
+    // PALETTE CONTENU (rechargee depuis util.Theme a chaque changement)
     // ---------------------------------------------------------------------
-    private static final Color FOND           = new Color(0xF1F5F9);
-    private static final Color CARTE          = new Color(0xFFFFFF);
-    private static final Color CARTE_ENTETE   = new Color(0xF8FAFC);
-    private static final Color BORDURE        = new Color(0xE2E8F0);
-    private static final Color TEXTE          = new Color(0x0F172A);
-    private static final Color TEXTE_DOUX     = new Color(0x64748B);
-    private static final Color PRIMAIRE       = new Color(0x2563EB);
-    private static final Color PRIMAIRE_FONCE = new Color(0x1E40AF);
-    private static final Color SUCCES         = new Color(0x16A34A);
-    private static final Color SUCCES_FOND    = new Color(0xDCFCE7);
-    private static final Color SUCCES_BORD    = new Color(0xBBF7D0);
-    private static final Color AMBRE          = new Color(0xD97706);
-    private static final Color AMBRE_FOND     = new Color(0xFEF3C7);
-    private static final Color AMBRE_BORD     = new Color(0xFDE68A);
-    private static final Color ERREUR         = new Color(0xDC2626);
-    private static final Color NEUTRE         = new Color(0x94A3B8);
+    private static Color FOND;
+    private static Color CARTE;
+    private static Color CARTE_ENTETE;
+    private static Color BORDURE;
+    private static Color TEXTE;
+    private static Color TEXTE_DOUX;
+    private static Color PRIMAIRE;
+    private static Color PRIMAIRE_FONCE;
+    private static Color SUCCES;
+    private static Color SUCCES_FOND;
+    private static Color SUCCES_BORD;
+    private static Color AMBRE;
+    private static Color AMBRE_FOND;
+    private static Color AMBRE_BORD;
+    private static Color ERREUR;
+    private static Color NEUTRE;
+
+    static {
+        Theme.addEcouteur(Dashboard::majPalette);
+        majPalette();
+    }
+
+    /** Recharge la palette locale depuis {@link Theme} (clair = valeurs d'origine). */
+    private static void majPalette() {
+        FOND = Theme.FOND;
+        CARTE = Theme.CARTE;
+        CARTE_ENTETE = Theme.CARTE_ENTETE;
+        BORDURE = Theme.BORDURE;
+        TEXTE = Theme.TEXTE;
+        TEXTE_DOUX = Theme.TEXTE_SECONDAIRE;
+        PRIMAIRE = Theme.PRIMAIRE;
+        PRIMAIRE_FONCE = Theme.PRIMAIRE_FONCE;
+        SUCCES = Theme.SUCCES;
+        SUCCES_FOND = Theme.SUCCES_FOND;
+        SUCCES_BORD = Theme.SUCCES_BORD;
+        AMBRE = Theme.AMBRE;
+        AMBRE_FOND = Theme.AMBRE_FOND;
+        AMBRE_BORD = Theme.AMBRE_BORD;
+        ERREUR = Theme.ERREUR;
+        NEUTRE = Theme.NEUTRE;
+    }
 
     private static final int LARGEUR_MENU = 208;
     private static final int HAUTEUR_KPI = 158;
@@ -157,7 +199,12 @@ public class Dashboard extends JFrame {
         // Rafraichit le nom affiche (barre laterale + entete) quand le profil change.
         if (panelParametre != null) {
             panelParametre.setSurProfilModifie(this::rafraichirProfil);
+            panelParametre.setSurPreferencesChangees(this::rafraichirPreferences);
         }
+
+        // Notifications reelles : publiees par EntreeForm / SortieForm.
+        NotificationCentre.addEcouteur(this::majNotifications);
+        majNotifications();
 
         // Rafraichissement periodique : uniquement quand la carte visible est "dashboard".
         minuterie = new javax.swing.Timer(30000, e -> {
@@ -185,7 +232,7 @@ public class Dashboard extends JFrame {
     }
 
     private void construireFenetre() {
-        setTitle("SmartPark - Gestion de parking");
+        setTitle(I18n.t("app.title", "SmartPark - Gestion de parking"));
         setSize(1280, 720);
         setMinimumSize(new Dimension(1180, 690));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -224,11 +271,11 @@ public class Dashboard extends JFrame {
         titre.setForeground(MENU_TEXTE_ACTIF);
         titre.setAlignmentX(Component.LEFT_ALIGNMENT);
         titres.add(titre);
-        JLabel sousTitre = new JLabel("GESTION DE PARKING");
-        sousTitre.setFont(police(Font.BOLD, 11));
-        sousTitre.setForeground(MENU_TEXTE);
-        sousTitre.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titres.add(sousTitre);
+        labelSousTitreMenu = new JLabel(I18n.t("menu.sous_titre", "GESTION DE PARKING"));
+        labelSousTitreMenu.setFont(police(Font.BOLD, 11));
+        labelSousTitreMenu.setForeground(MENU_TEXTE);
+        labelSousTitreMenu.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titres.add(labelSousTitreMenu);
         ligne.add(titres);
         entete.add(ligne, BorderLayout.CENTER);
 
@@ -246,12 +293,13 @@ public class Dashboard extends JFrame {
         nav.setBorder(BorderFactory.createEmptyBorder(16, 8, 8, 8));
         nav.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        ajouterBouton(nav, "Dashboard", Icone.Type.ACCUEIL, "dashboard");
-        ajouterBouton(nav, "Proprietaires", Icone.Type.PROPRIETAIRE, "proprietaire");
-        ajouterBouton(nav, "Vehicules", Icone.Type.VEHICULE, "vehicule");
+        ajouterBouton(nav, I18n.t("menu.dashboard", "Dashboard"), Icone.Type.ACCUEIL, "dashboard");
+        ajouterBouton(nav, I18n.t("menu.proprietaires", "Proprietaires"), Icone.Type.PROPRIETAIRE, "proprietaire");
+        ajouterBouton(nav, I18n.t("menu.vehicules", "Vehicules"), Icone.Type.VEHICULE, "vehicule");
 
         // Groupe "Stationnement" : Entree / Sortie dans un sous-menu deroulant.
-        boutonStationnement = new BoutonGroupe("Stationnement", Icone.Type.STATIONNEMENT);
+        boutonStationnement = new BoutonGroupe(I18n.t("menu.stationnement", "Stationnement"),
+                Icone.Type.STATIONNEMENT);
         boutonStationnement.addActionListener(e -> basculerStationnement());
         nav.add(boutonStationnement);
         nav.add(Box.createVerticalStrut(6));
@@ -262,12 +310,12 @@ public class Dashboard extends JFrame {
         sousMenuStationnement.setLayout(new BoxLayout(sousMenuStationnement, BoxLayout.Y_AXIS));
         sousMenuStationnement.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        boutonEntree = new BoutonMenu("Entree", Icone.Type.ENTREE, false);
+        boutonEntree = new BoutonMenu(I18n.t("menu.entree", "Entree"), Icone.Type.ENTREE, false);
         boutonEntree.setIndente(true);
         boutonEntree.addActionListener(e -> afficherCarte("entree"));
         boutonsNav.put("entree", boutonEntree);
 
-        boutonSortie = new BoutonMenu("Sortie", Icone.Type.SORTIE, false);
+        boutonSortie = new BoutonMenu(I18n.t("menu.sortie", "Sortie"), Icone.Type.SORTIE, false);
         boutonSortie.setIndente(true);
         boutonSortie.addActionListener(e -> afficherCarte("sortie"));
         boutonsNav.put("sortie", boutonSortie);
@@ -278,8 +326,8 @@ public class Dashboard extends JFrame {
         sousMenuStationnement.setVisible(false);
         nav.add(sousMenuStationnement);
 
-        ajouterBouton(nav, "Historique", Icone.Type.HISTORIQUE, "historique");
-        ajouterBouton(nav, "Parametres", Icone.Type.PARAMETRE, "parametre");
+        ajouterBouton(nav, I18n.t("menu.historique", "Historique"), Icone.Type.HISTORIQUE, "historique");
+        ajouterBouton(nav, I18n.t("menu.parametres", "Parametres"), Icone.Type.PARAMETRE, "parametre");
 
         menu.add(nav);
 
@@ -296,7 +344,7 @@ public class Dashboard extends JFrame {
         pastilleUtilisateur = new PastilleUtilisateur(initiale(utilisateur));
         blocUtilisateur.add(pastilleUtilisateur);
 
-        labelConnecte = new JLabel("Connecte : " + nomAffiche());
+        labelConnecte = new JLabel(I18n.t("menu.connecte", "Connecte") + " : " + nomAffiche());
         labelConnecte.setFont(police(Font.PLAIN, 12));
         labelConnecte.setForeground(MENU_TEXTE);
         blocUtilisateur.add(labelConnecte);
@@ -314,10 +362,10 @@ public class Dashboard extends JFrame {
         bas.setMaximumSize(new Dimension(LARGEUR_MENU, 60));
         bas.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        BoutonMenu btnDeconnexion = new BoutonMenu("Deconnexion",
+        boutonDeconnexion = new BoutonMenu(I18n.t("menu.deconnexion", "Deconnexion"),
                 Icone.Type.DECONNEXION, true);
-        btnDeconnexion.addActionListener(this::deconnecter);
-        bas.add(btnDeconnexion);
+        boutonDeconnexion.addActionListener(this::deconnecter);
+        bas.add(boutonDeconnexion);
         menu.add(bas);
 
         add(menu, BorderLayout.WEST);
@@ -491,26 +539,29 @@ public class Dashboard extends JFrame {
         JPanel gauche = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         gauche.setOpaque(false);
         gauche.add(new JLabel(new Icone(Icone.Type.CALENDRIER, 20, TEXTE_DOUX)));
-        JLabel date = new JLabel(dateDuJour());
-        date.setFont(police(Font.PLAIN, 15));
-        date.setForeground(TEXTE);
-        gauche.add(date);
+        labelDateEntete = new JLabel(dateDuJour());
+        labelDateEntete.setFont(police(Font.PLAIN, 15));
+        labelDateEntete.setForeground(TEXTE);
+        gauche.add(labelDateEntete);
         bandeau.add(gauche, BorderLayout.WEST);
 
         JPanel droite = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         droite.setOpaque(false);
-        droite.add(new BoutonNotifications());
+        boutonNotifications = new BoutonNotifications();
+        droite.add(boutonNotifications);
         droite.add(creerChipUtilisateur());
         bandeau.add(droite, BorderLayout.EAST);
         return bandeau;
     }
 
-    /** Chip utilisateur (avatar + nom + Online). */
+    /** Chip utilisateur (avatar + nom + Online). Cliquable : ouvre le menu profil. */
     private JPanel creerChipUtilisateur() {
-        FondArrondi chip = new FondArrondi(CARTE, BORDURE, 8);
-        chip.setLayout(new BorderLayout(8, 0));
-        chip.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
-        chip.add(new PastilleIcone(Icone.Type.UTILISATEUR, 20, FOND, TEXTE_DOUX),
+        chipUtilisateur = new FondArrondi(CARTE, BORDURE, 8);
+        chipUtilisateur.setLayout(new BorderLayout(8, 0));
+        chipUtilisateur.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        chipUtilisateur.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        chipUtilisateur.setToolTipText(I18n.t("header.voir_parametres", "Ouvrir les parametres"));
+        chipUtilisateur.add(new PastilleIcone(Icone.Type.UTILISATEUR, 20, FOND, TEXTE_DOUX),
                 BorderLayout.WEST);
 
         JPanel colonne = new JPanel();
@@ -526,14 +577,22 @@ public class Dashboard extends JFrame {
         JPanel enLigne = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         enLigne.setOpaque(false);
         enLigne.add(new PointColor(SUCCES, 6));
-        enLigne.add(texte("Online", Font.PLAIN, 11, SUCCES));
+        enLigne.add(texte(I18n.t("header.online", "En ligne"), Font.PLAIN, 11, SUCCES));
         enLigne.setAlignmentX(Component.LEFT_ALIGNMENT);
         colonne.add(enLigne);
 
-        chip.add(colonne, BorderLayout.CENTER);
+        chipUtilisateur.add(colonne, BorderLayout.CENTER);
+
+        chipUtilisateur.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                ouvrirProfil();
+            }
+        });
+
         JPanel conteneur = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         conteneur.setOpaque(false);
-        conteneur.add(chip);
+        conteneur.add(chipUtilisateur);
         return conteneur;
     }
 
@@ -596,9 +655,11 @@ public class Dashboard extends JFrame {
         JPanel legende = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         legende.setOpaque(false);
         legende.add(new CarrePlein(PRIMAIRE, 10));
-        legende.add(texte("Recette encaissee (Ar)", Font.PLAIN, 11, TEXTE_DOUX));
+        labelLegendeRecette = texte("Recette encaissee (" + Devise.symbole() + ")",
+                Font.PLAIN, 11, TEXTE_DOUX);
+        legende.add(labelLegendeRecette);
         droite.add(legende);
-        labelTotal = texte("Total : 0 Ar", Font.BOLD, 11, TEXTE);
+        labelTotal = texte("Total : " + Devise.formater(0), Font.BOLD, 11, TEXTE);
         droite.add(labelTotal);
         entete.add(droite, BorderLayout.EAST);
         carte.add(entete, BorderLayout.NORTH);
@@ -618,8 +679,10 @@ public class Dashboard extends JFrame {
 
         JPanel piedGauche = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 0));
         piedGauche.setOpaque(false);
-        labelMoyenne = texte("Moyenne journaliere : 0 Ar", Font.PLAIN, 11, TEXTE_DOUX);
-        labelPic = texte("Pic hebdomadaire : 0 Ar (-)", Font.PLAIN, 11, TEXTE_DOUX);
+        labelMoyenne = texte("Moyenne journaliere : " + Devise.formater(0),
+                Font.PLAIN, 11, TEXTE_DOUX);
+        labelPic = texte("Pic hebdomadaire : " + Devise.formater(0) + " (-)",
+                Font.PLAIN, 11, TEXTE_DOUX);
         piedGauche.add(labelMoyenne);
         piedGauche.add(labelPic);
 
@@ -669,20 +732,24 @@ public class Dashboard extends JFrame {
                 carteVehicules.setValeurs(String.valueOf(gares), "", TEXTE_DOUX,
                         String.format(Locale.US, "%.1f%%", occupation) + " d'occupation",
                         etatOccupation);
-                carteRecette.setValeurs(nombre(recette), "Ar", PRIMAIRE,
-                        "Aujourd'hui", "Arrete " + heure(LocalDateTime.now()));
+                carteRecette.setValeurs(Devise.formaterSansSymbole(recette), Devise.symbole(),
+                        PRIMAIRE, "Aujourd'hui", "Arrete " + heure(LocalDateTime.now()));
                 carteSorties.setValeurs(String.valueOf(sorties), "", TEXTE_DOUX,
                         sorties > 0 ? "Journee active" : "Journee calme",
                         nombre(gares) + " vehicules gares");
             }
 
+            if (boutonNotifications != null) {
+                majNotifications();
+            }
+
             if (graphique != null) {
                 graphique.setDonnees(stationnementDAO.recettesParJour());
-                labelTotal.setText("Total : " + nombre(graphique.getSomme()) + " Ar");
+                labelTotal.setText("Total : " + Devise.formater(graphique.getSomme()));
                 labelMoyenne.setText("Moyenne journaliere : "
-                        + nombre(graphique.getMoyenne()) + " Ar");
-                labelPic.setText("Pic hebdomadaire : " + nombre(graphique.getPic())
-                        + " Ar (" + graphique.getPicJour() + ")");
+                        + Devise.formater(graphique.getMoyenne()));
+                labelPic.setText("Pic hebdomadaire : " + Devise.formater(graphique.getPic())
+                        + " (" + graphique.getPicJour() + ")");
             }
 
             if (journal != null) {
@@ -699,16 +766,19 @@ public class Dashboard extends JFrame {
             cartePlaces.setValeurs("0", "/ 0", TEXTE_DOUX, "Disponible",
                     "0 places au total");
             carteVehicules.setValeurs("0", "", TEXTE_DOUX, "0.0% d'occupation", "Fluide");
-            carteRecette.setValeurs("0", "Ar", PRIMAIRE, "Aujourd'hui",
+            carteRecette.setValeurs("0", Devise.symbole(), PRIMAIRE, "Aujourd'hui",
                     "Arrete " + heure(LocalDateTime.now()));
             carteSorties.setValeurs("0", "", TEXTE_DOUX, "Journee calme",
                     "0 vehicules gares");
         }
+        if (boutonNotifications != null) {
+            majNotifications();
+        }
         if (graphique != null) {
             graphique.setDonnees(new String[0][]);
-            labelTotal.setText("Total : 0 Ar");
-            labelMoyenne.setText("Moyenne journaliere : 0 Ar");
-            labelPic.setText("Pic hebdomadaire : 0 Ar (-)");
+            labelTotal.setText("Total : " + Devise.formater(0));
+            labelMoyenne.setText("Moyenne journaliere : " + Devise.formater(0));
+            labelPic.setText("Pic hebdomadaire : " + Devise.formater(0) + " (-)");
         }
         if (journal != null) {
             journal.setDonnees(java.util.Collections.<Stationnement>emptyList());
@@ -732,7 +802,7 @@ public class Dashboard extends JFrame {
     private void rafraichirProfil() {
         String nom = nomAffiche();
         if (labelConnecte != null) {
-            labelConnecte.setText("Connecte : " + nom);
+            labelConnecte.setText(I18n.t("menu.connecte", "Connecte") + " : " + nom);
         }
         if (labelNomEntete != null) {
             labelNomEntete.setText(nom);
@@ -742,10 +812,288 @@ public class Dashboard extends JFrame {
         }
     }
 
+    /**
+     * Repercute un changement de preference (langue, devise) sur le Dashboard :
+     * libelles du menu, entete, montants formates.
+     */
+    private void rafraichirPreferences() {
+        rafraichirMenuLibelles();
+        if (labelLegendeRecette != null) {
+            labelLegendeRecette.setText("Recette encaissee (" + Devise.symbole() + ")");
+        }
+        if (chipUtilisateur != null) {
+            chipUtilisateur.setToolTipText(I18n.t("header.voir_parametres",
+                    "Ouvrir les parametres"));
+        }
+        if (boutonNotifications != null) {
+            boutonNotifications.setToolTipText(I18n.t("header.notifications", "Notifications"));
+        }
+        actualiserAccueil();
+    }
+
+    /** Reapplique les libelles traduits du menu lateral et de l'entete. */
+    private void rafraichirMenuLibelles() {
+        for (Map.Entry<String, BoutonMenu> entree : boutonsNav.entrySet()) {
+            String cle = cleMenu(entree.getKey());
+            if (cle != null) {
+                entree.getValue().setText(I18n.t(cle, entree.getValue().getText()));
+            }
+        }
+        if (boutonStationnement != null) {
+            boutonStationnement.setText(I18n.t("menu.stationnement", "Stationnement"));
+        }
+        if (boutonDeconnexion != null) {
+            boutonDeconnexion.setText(I18n.t("menu.deconnexion", "Deconnexion"));
+        }
+        if (labelSousTitreMenu != null) {
+            labelSousTitreMenu.setText(I18n.t("menu.sous_titre", "GESTION DE PARKING"));
+        }
+        if (labelDateEntete != null) {
+            labelDateEntete.setText(dateDuJour());
+        }
+        setTitle(I18n.t("app.title", "SmartPark - Gestion de parking"));
+        menu.repaint();
+    }
+
+    /** Clef de traduction associee a une carte du menu (null si inconnue). */
+    private static String cleMenu(String carte) {
+        switch (carte) {
+            case "dashboard": return "menu.dashboard";
+            case "proprietaire": return "menu.proprietaires";
+            case "vehicule": return "menu.vehicules";
+            case "entree": return "menu.entree";
+            case "sortie": return "menu.sortie";
+            case "historique": return "menu.historique";
+            case "parametre": return "menu.parametres";
+            default: return null;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // NOTIFICATIONS (donnees reelles)
+    // ---------------------------------------------------------------------
+    /** Met a jour la pastille du bouton de notifications (nombre de non lues). */
+    private void majNotifications() {
+        if (boutonNotifications == null) {
+            return;
+        }
+        Runnable action = ()
+                -> boutonNotifications.setAlertes(NotificationCentre.nonLues());
+        if (javax.swing.SwingUtilities.isEventDispatchThread()) {
+            action.run();
+        } else {
+            javax.swing.SwingUtilities.invokeLater(action);
+        }
+    }
+
+    private void ouvrirNotifications() {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBorder(BorderFactory.createLineBorder(BORDURE, 1));
+        popup.add(entetePopup(I18n.t("header.notif_titre", "Notifications")));
+        popup.add(new JSeparator());
+
+        // 1) Evenements reels (entrees / sorties confirmees).
+        List<NotificationCentre.Evenement> evenements = NotificationCentre.lister();
+        if (evenements.isEmpty()) {
+            popup.add(itemNotif(Icone.Type.CLOCHE, I18n.t("header.notif_vide",
+                    "Aucune notification pour le moment."), ""));
+        } else {
+            int n = Math.min(6, evenements.size());
+            for (int i = 0; i < n; i++) {
+                popup.add(itemEvenement(evenements.get(i)));
+            }
+        }
+
+        // 2) Etat courant du parc (statistiques reelles, lecture seule).
+        try {
+            int gares = stationnementDAO.vehiculesActuellementGares();
+            int libres = placeDAO.compterLibres();
+            int total = placeDAO.listerToutes().size();
+            double occupation = total > 0 ? gares * 100.0 / total : 0;
+            popup.add(new JSeparator());
+            popup.add(itemNotif(Icone.Type.VEHICULE, I18n.t("header.notif_gares",
+                    "Vehicule(s) actuellement gare(s)"), gares + " / " + total));
+            popup.add(itemNotif(Icone.Type.PARKING, I18n.t("header.notif_libres",
+                    "Place(s) libre(s) sur le parc"), String.valueOf(libres)));
+            popup.add(itemNotif(Icone.Type.STATISTIQUE, I18n.t("header.notif_occupation",
+                    "Taux d'occupation actuel"), String.format(Locale.US, "%.1f%%", occupation)));
+            if (occupation >= 90) {
+                popup.add(itemNotif(Icone.Type.CLOCHE, I18n.t("header.notif_saturation",
+                        "Capacite presque saturee"), ""));
+            }
+        } catch (Exception ex) {
+            // Base indisponible : on affiche malgre tout les notifications locales.
+        }
+
+        NotificationCentre.marquerToutesLues();
+        majNotifications();
+        if (boutonNotifications != null) {
+            popup.show(boutonNotifications, 0, boutonNotifications.getHeight() + 4);
+        }
+    }
+
+    /** Ligne du popup pour un evenement d'entree/sortie reel. */
+    private JPanel itemEvenement(NotificationCentre.Evenement evenement) {
+        boolean entree = evenement.getType() == NotificationCentre.Type.ENTREE;
+        Icone.Type icone = entree ? Icone.Type.ENTREE : Icone.Type.SORTIE;
+        Color accent = entree ? PRIMAIRE : SUCCES;
+
+        JPanel ligne = new JPanel(new BorderLayout(10, 0));
+        ligne.setOpaque(true);
+        ligne.setBackground(CARTE);
+        ligne.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 18));
+
+        JLabel gauche = new JLabel();
+        gauche.setIcon(new Icone(icone, 16, accent));
+        gauche.setIconTextGap(8);
+        gauche.setFont(police(Font.PLAIN, 12));
+        gauche.setForeground(TEXTE);
+        String texte = I18n.t(entree ? "notif.entree" : "notif.sortie",
+                entree ? "Entree" : "Sortie") + " : "
+                + valeur(evenement.getImmatriculation());
+        if (!entree && evenement.getMontant() > 0) {
+            texte += " - " + Devise.formater(evenement.getMontant());
+        } else if (entree && evenement.getPlace() != null
+                && !evenement.getPlace().isEmpty()) {
+            texte += " - " + I18n.t("notif.place", "Place") + " " + evenement.getPlace();
+        }
+        gauche.setText(texte);
+        ligne.add(gauche, BorderLayout.CENTER);
+
+        JLabel droite = new JLabel(evenement.getMoment().format(
+                DateTimeFormatter.ofPattern("HH:mm")));
+        droite.setFont(police(Font.BOLD, 11));
+        droite.setForeground(TEXTE_DOUX);
+        ligne.add(droite, BorderLayout.EAST);
+        return ligne;
+    }
+
+    // ---------------------------------------------------------------------
+    // PROFIL UTILISATEUR (menu de l'entete)
+    // ---------------------------------------------------------------------
+    private void ouvrirProfil() {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBorder(BorderFactory.createLineBorder(BORDURE, 1));
+        popup.add(enteteProfil());
+
+        JMenuItem compte = itemMenu(I18n.t("header.mon_compte", "Mon compte"),
+                Icone.Type.UTILISATEUR);
+        compte.addActionListener(e -> {
+            afficherCarte("parametre");
+            panelParametre.afficherSection("profil");
+        });
+        popup.add(compte);
+
+        JMenuItem securite = itemMenu(I18n.t("header.securite", "Securite"),
+                Icone.Type.CADENAS);
+        securite.addActionListener(e -> {
+            afficherCarte("parametre");
+            panelParametre.afficherSection("securite");
+        });
+        popup.add(securite);
+
+        popup.add(new JSeparator());
+        JMenuItem deconnexion = itemMenu(I18n.t("menu.deconnexion", "Deconnexion"),
+                Icone.Type.DECONNEXION);
+        deconnexion.addActionListener(e -> deconnecter(null));
+        popup.add(deconnexion);
+
+        if (chipUtilisateur != null) {
+            popup.show(chipUtilisateur, 0, chipUtilisateur.getHeight() + 4);
+        }
+    }
+
+    /** Entete du popup profil : nom, email et role de l'utilisateur connecte. */
+    private JComponent enteteProfil() {
+        JPanel panneau = new JPanel();
+        panneau.setOpaque(true);
+        panneau.setBackground(CARTE_ENTETE);
+        panneau.setLayout(new BoxLayout(panneau, BoxLayout.Y_AXIS));
+        panneau.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 18));
+
+        JLabel nom = new JLabel(nomAffiche());
+        nom.setFont(police(Font.BOLD, 14));
+        nom.setForeground(TEXTE);
+        nom.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panneau.add(nom);
+
+        String email = utilisateur != null ? valeur(utilisateur.getEmail()) : "-";
+        JLabel lblEmail = new JLabel(email);
+        lblEmail.setFont(police(Font.PLAIN, 12));
+        lblEmail.setForeground(TEXTE_DOUX);
+        lblEmail.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panneau.add(Box.createVerticalStrut(2));
+        panneau.add(lblEmail);
+
+        if (utilisateur != null && utilisateur.getRole() != null
+                && !utilisateur.getRole().isEmpty()) {
+            JLabel role = new JLabel(utilisateur.getRole());
+            role.setFont(police(Font.BOLD, 11));
+            role.setForeground(PRIMAIRE);
+            role.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panneau.add(Box.createVerticalStrut(4));
+            panneau.add(role);
+        }
+        return panneau;
+    }
+
+    /** Ligne du popup notifications : icone + libelle + valeur a droite. */
+    private JPanel itemNotif(Icone.Type icone, String libelle, String valeur) {
+        JPanel ligne = new JPanel(new BorderLayout(10, 0));
+        ligne.setOpaque(true);
+        ligne.setBackground(CARTE);
+        ligne.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 18));
+        JLabel gauche = new JLabel(libelle);
+        gauche.setIcon(new Icone(icone, 16, PRIMAIRE));
+        gauche.setIconTextGap(8);
+        gauche.setFont(police(Font.PLAIN, 12));
+        gauche.setForeground(TEXTE);
+        ligne.add(gauche, BorderLayout.CENTER);
+        if (valeur != null && !valeur.isEmpty()) {
+            JLabel droite = new JLabel(valeur);
+            droite.setFont(police(Font.BOLD, 12));
+            droite.setForeground(TEXTE_DOUX);
+            ligne.add(droite, BorderLayout.EAST);
+        }
+        return ligne;
+    }
+
+    /** Titre du popup notifications. */
+    private JPanel entetePopup(String titre) {
+        JPanel panneau = new JPanel(new BorderLayout());
+        panneau.setOpaque(true);
+        panneau.setBackground(CARTE_ENTETE);
+        panneau.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 18));
+        JLabel label = new JLabel(titre);
+        label.setFont(police(Font.BOLD, 12));
+        label.setForeground(TEXTE);
+        panneau.add(label, BorderLayout.WEST);
+        return panneau;
+    }
+
+    /** Element de menu stylise du popup profil. */
+    private JMenuItem itemMenu(String libelle, Icone.Type icone) {
+        JMenuItem item = new JMenuItem(libelle, new Icone(icone, 16, TEXTE_DOUX));
+        item.setFont(police(Font.PLAIN, 12));
+        item.setForeground(TEXTE);
+        item.setBackground(CARTE);
+        item.setIconTextGap(10);
+        item.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 18));
+        item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return item;
+    }
+
+    /** Valeur affichable (jamais null). */
+    private static String valeur(String texte) {
+        return (texte != null && !texte.isEmpty()) ? texte : "-";
+    }
+
     private static String dateDuJour() {
         LocalDate aujourdhui = LocalDate.now();
+        Locale locale = I18n.langue() != null && I18n.langue().startsWith("mg")
+                ? Locale.forLanguageTag("mg") : Locale.FRENCH;
         String texte = aujourdhui.format(
-                DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH));
+                DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", locale));
         return Character.toUpperCase(texte.charAt(0)) + texte.substring(1);
     }
 
@@ -759,6 +1107,12 @@ public class Dashboard extends JFrame {
         if ("dashboard".equals(nomCarte)) {
             actualiserAccueil();
             panelStatistique.actualiser();
+        } else if ("entree".equals(nomCarte)) {
+            // Les vehicules/places crees depuis d'autres pages doivent apparaitre.
+            panelEntree.rafraichir();
+        } else if ("sortie".equals(nomCarte)) {
+            // Seuls les stationnements en cours enregistres sont proposes.
+            panelSortie.rafraichir();
         }
     }
 
@@ -1264,14 +1618,45 @@ public class Dashboard extends JFrame {
         }
     }
 
-    /** Bouton notifications (w-9 h-9, rounded-lg, pastille bleue). */
-    private static class BoutonNotifications extends JPanel {
+    /** Bouton notifications (w-9 h-9, rounded-lg, pastille d'alerte). */
+    private class BoutonNotifications extends JPanel {
+
+        private int alertes;
+        private boolean survol;
 
         BoutonNotifications() {
             setOpaque(false);
             setPreferredSize(new Dimension(36, 36));
             setMinimumSize(new Dimension(36, 36));
             setMaximumSize(new Dimension(36, 36));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setToolTipText(I18n.t("header.notifications", "Notifications"));
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    ouvrirNotifications();
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    survol = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    survol = false;
+                    repaint();
+                }
+            });
+        }
+
+        /** Nombre d'alertes en cours : affiche la pastille uniquement si > 0. */
+        void setAlertes(int alertes) {
+            if (this.alertes != alertes) {
+                this.alertes = alertes;
+                repaint();
+            }
         }
 
         @Override
@@ -1279,14 +1664,16 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(CARTE);
+            g2.setColor(survol ? FOND : CARTE);
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
             g2.setColor(BORDURE);
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
             new Icone(Icone.Type.CLOCHE, 20, TEXTE_DOUX)
                     .paintIcon(this, g2, (getWidth() - 20) / 2, (getHeight() - 20) / 2);
-            g2.setColor(PRIMAIRE);
-            g2.fillOval(getWidth() - 9, 3, 6, 6);
+            if (alertes > 0) {
+                g2.setColor(ERREUR);
+                g2.fillOval(getWidth() - 9, 3, 6, 6);
+            }
             g2.dispose();
         }
     }
@@ -1489,7 +1876,7 @@ public class Dashboard extends JFrame {
             FontMetrics fm = g2.getFontMetrics();
             for (int i = 0; i <= 5; i++) {
                 int y = bas - bas * i / 5;
-                String lab = nombre(maximum * i / 5.0) + " Ar";
+                String lab = nombre(maximum * i / 5.0) + " " + Devise.symbole();
                 g2.setColor(TEXTE_DOUX);
                 g2.drawString(lab, gauche - 12 - fm.stringWidth(lab),
                         y + fm.getAscent() / 2 - 1);
@@ -1683,7 +2070,7 @@ public class Dashboard extends JFrame {
             JLabel val = new JLabel();
             val.setFont(police(Font.BOLD, 11));
             if (sortie) {
-                val.setText(nombre(s.getMontant()) + " Ar");
+                val.setText(Devise.formater(s.getMontant()));
                 val.setForeground(PRIMAIRE);
             } else {
                 val.setText("TKT #" + s.getIdStationnement());

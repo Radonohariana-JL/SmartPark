@@ -35,6 +35,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -45,11 +46,16 @@ import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import model.Utilisateur;
+import util.Devise;
+import util.I18n;
 import util.MotDePasse;
+import util.PreferencesApp;
+import util.Theme;
 
 /**
  * Page Parametres : profil, securite (mot de passe), tarif (gestion des prix)
@@ -66,31 +72,63 @@ import util.MotDePasse;
 public class ParametreForm extends JPanel {
 
     // ---------------------------------------------------------------------
-    // PALETTE DE COULEURS
+    // PALETTE DE COULEURS (rechargee depuis util.Theme a chaque changement)
     // ---------------------------------------------------------------------
-    private static final Color FOND             = new Color(0xF1F5F9);
-    private static final Color CARTE            = new Color(0xFFFFFF);
-    private static final Color BORDURE          = new Color(0xE2E8F0);
-    private static final Color BANDE            = new Color(0xF8FAFC);
-    private static final Color CHIP_FOND        = new Color(0xE2E8F0);
-    private static final Color OUTLINE          = new Color(0x94A3B8);
-    private static final Color PRIMAIRE         = new Color(0x2563EB);
-    private static final Color PRIMAIRE_HOVER   = new Color(0x1D4ED8);
-    private static final Color PRIMAIRE_PRESSED = new Color(0x1E40AF);
-    private static final Color TEXTE            = new Color(0x0F172A);
-    private static final Color TEXTE_SECONDAIRE = new Color(0x64748B);
-    private static final Color LABEL            = new Color(0x334155);
-    private static final Color BORDURE_CHAMP    = new Color(0xCBD5E1);
-    private static final Color SELECTION        = new Color(0xDBEAFE);
-    private static final Color LIGNE_ALTERNEE   = new Color(0xF8FAFC);
-    private static final Color VERT             = new Color(0x16A34A);
-    private static final Color VERT_FOND        = new Color(0xDCFCE7);
-    private static final Color BLEU_FOND        = new Color(0xEFF6FF);
-    private static final Color BLEU_BORDURE     = new Color(0xBFDBFE);
-    private static final Color PASTILLE_TEXTE   = new Color(0x1D4ED8);
-    private static final Color PASTILLE_MODULE  = new Color(0xF1F5F9);
-    private static final Color ROUGE            = new Color(0xDC2626);
-    private static final Color ORANGE           = new Color(0xEA580C);
+    private static Color FOND;
+    private static Color CARTE;
+    private static Color BORDURE;
+    private static Color BANDE;
+    private static Color CHIP_FOND;
+    private static Color OUTLINE;
+    private static Color PRIMAIRE;
+    private static Color PRIMAIRE_HOVER;
+    private static Color PRIMAIRE_PRESSED;
+    private static Color TEXTE;
+    private static Color TEXTE_SECONDAIRE;
+    private static Color LABEL;
+    private static Color BORDURE_CHAMP;
+    private static Color SELECTION;
+    private static Color LIGNE_ALTERNEE;
+    private static Color VERT;
+    private static Color VERT_FOND;
+    private static Color BLEU_FOND;
+    private static Color BLEU_BORDURE;
+    private static Color PASTILLE_TEXTE;
+    private static Color PASTILLE_MODULE;
+    private static Color ROUGE;
+    private static Color ORANGE;
+
+    static {
+        Theme.addEcouteur(ParametreForm::majPalette);
+        majPalette();
+    }
+
+    /** Recharge la palette locale depuis {@link Theme} (clair = valeurs d'origine). */
+    private static void majPalette() {
+        FOND = Theme.FOND;
+        CARTE = Theme.CARTE;
+        BORDURE = Theme.BORDURE;
+        BANDE = Theme.BANDE;
+        CHIP_FOND = Theme.CHIP_FOND;
+        OUTLINE = Theme.OUTLINE;
+        PRIMAIRE = Theme.PRIMAIRE;
+        PRIMAIRE_HOVER = Theme.PRIMAIRE_HOVER;
+        PRIMAIRE_PRESSED = Theme.PRIMAIRE_PRESSED;
+        TEXTE = Theme.TEXTE;
+        TEXTE_SECONDAIRE = Theme.TEXTE_SECONDAIRE;
+        LABEL = Theme.LABEL;
+        BORDURE_CHAMP = Theme.BORDURE_CHAMP;
+        SELECTION = Theme.SELECTION;
+        LIGNE_ALTERNEE = Theme.LIGNE_ALTERNEE;
+        VERT = Theme.SUCCES;
+        VERT_FOND = Theme.VERT_FOND;
+        BLEU_FOND = Theme.BLEU_FOND;
+        BLEU_BORDURE = Theme.BLEU_BORDURE;
+        PASTILLE_TEXTE = Theme.estSombre() ? new Color(0x93C5FD) : new Color(0x1D4ED8);
+        PASTILLE_MODULE = Theme.FOND;
+        ROUGE = Theme.ERREUR;
+        ORANGE = Theme.estSombre() ? new Color(0xFBBF24) : new Color(0xEA580C);
+    }
 
     private final Utilisateur utilisateur;
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
@@ -98,6 +136,7 @@ public class ParametreForm extends JPanel {
     private final CardLayout cartes = new CardLayout();
     private final JPanel contenu = new JPanel(cartes);
     private final Map<String, Onglet> boutonsNav = new LinkedHashMap<>();
+    private String sectionActive = "profil";
 
     // Profil
     private final Avatar avatar;
@@ -111,10 +150,23 @@ public class ParametreForm extends JPanel {
     private final ForceMotDePasse force = new ForceMotDePasse();
 
     private Runnable surProfilModifie;
+    private Runnable surPreferencesChangees;
 
     public ParametreForm(Utilisateur utilisateur) {
         this.utilisateur = utilisateur;
         this.avatar = new Avatar(utilisateur != null ? utilisateur.getNom() : null);
+        construire();
+    }
+
+    /**
+     * (Re)construit l'interface complete. Appele a la construction puis a chaque
+     * changement de preference (theme, langue, devise) afin que les libelles et
+     * les apercus refletent immediatement les valeurs enregistrees.
+     */
+    private void construire() {
+        removeAll();
+        contenu.removeAll();
+        boutonsNav.clear();
 
         setLayout(new BorderLayout());
         setOpaque(true);
@@ -134,12 +186,19 @@ public class ParametreForm extends JPanel {
         corps.add(creerAside(), BorderLayout.EAST);
         add(corps, BorderLayout.CENTER);
 
-        afficherSection("profil");
+        afficherSection(sectionActive);
+        revalidate();
+        repaint();
     }
 
     /** Appele apres une modification reussie du nom (ex. rafraichir le menu du Dashboard). */
     public void setSurProfilModifie(Runnable action) {
         this.surProfilModifie = action;
+    }
+
+    /** Appele apres un changement de langue ou de devise (ex. rafraichir le Dashboard). */
+    public void setSurPreferencesChangees(Runnable action) {
+        this.surPreferencesChangees = action;
     }
 
     // ---------------------------------------------------------------------
@@ -194,15 +253,15 @@ public class ParametreForm extends JPanel {
         g.gridy = 0;
         colonne.add(ligneMeta, g);
 
-        JLabel titre = new JLabel("Paramètres");
+        JLabel titre = new JLabel(I18n.t("param.titre", "Paramètres"));
         titre.setFont(police(Font.BOLD, 32));
         titre.setForeground(TEXTE);
         g.gridy = 1;
         g.insets = new Insets(8, 0, 0, 0);
         colonne.add(titre, g);
 
-        JLabel sousTitre = new JLabel(
-                "Consultez les informations de votre compte et les paramètres de votre espace SmartPark.");
+        JLabel sousTitre = new JLabel(I18n.t("param.sous_titre",
+                "Consultez les informations de votre compte et les paramètres de votre espace SmartPark."));
         sousTitre.setFont(police(Font.PLAIN, 13));
         sousTitre.setForeground(TEXTE_SECONDAIRE);
         g.gridy = 2;
@@ -223,10 +282,11 @@ public class ParametreForm extends JPanel {
     private JPanel creerNavigation() {
         JPanel nav = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
         nav.setOpaque(false);
-        ajouterNav(nav, "Mon compte", Icone.Type.UTILISATEUR, "profil");
-        ajouterNav(nav, "Sécurité", Icone.Type.CADENAS, "securite");
-        ajouterNav(nav, "Tarif", Icone.Type.TARIF, "tarifs");
-        ajouterNav(nav, "Informations de l'application", Icone.Type.LISTE, "apropos");
+        ajouterNav(nav, I18n.t("param.tab.compte", "Mon compte"), Icone.Type.UTILISATEUR, "profil");
+        ajouterNav(nav, I18n.t("param.tab.securite", "Sécurité"), Icone.Type.CADENAS, "securite");
+        ajouterNav(nav, I18n.t("param.tab.tarif", "Tarif"), Icone.Type.TARIF, "tarifs");
+        ajouterNav(nav, I18n.t("param.tab.apropos", "Informations de l'application"),
+                Icone.Type.LISTE, "apropos");
         return nav;
     }
 
@@ -237,11 +297,18 @@ public class ParametreForm extends JPanel {
         nav.add(b);
     }
 
-    private void afficherSection(String cle) {
+    /** Affiche une section (profil, securite, tarifs, apropos). Appelable par le Dashboard. */
+    public void afficherSection(String cle) {
+        sectionActive = cle;
         cartes.show(contenu, cle);
         for (Map.Entry<String, Onglet> e : boutonsNav.entrySet()) {
             e.getValue().setActif(e.getKey().equals(cle));
         }
+    }
+
+    /** Reconstruit l'interface pour appliquer un changement de langue/theme. */
+    public void rafraichirLibelles() {
+        construire();
     }
 
     // ---------------------------------------------------------------------
@@ -332,7 +399,7 @@ public class ParametreForm extends JPanel {
         jf.setFont(police(Font.PLAIN, 11));
         jf.setForeground(LABEL);
         rang1.add(jf, BorderLayout.WEST);
-        JLabel laf = new JLabel("FLATLAF_LIGHT");
+        JLabel laf = new JLabel(Theme.estSombre() ? "THEME_SOMBRE" : "THEME_CLAIR");
         laf.setFont(policeMono(Font.PLAIN, 9));
         laf.setForeground(TEXTE_SECONDAIRE);
         laf.setOpaque(true);
@@ -354,7 +421,7 @@ public class ParametreForm extends JPanel {
         ts.setForeground(TEXTE);
         g2.add(ts);
         rang2.add(g2, BorderLayout.WEST);
-        JLabel prix = new JLabel("3 000 Ar");
+        JLabel prix = new JLabel(Devise.formater(3000));
         prix.setFont(policeMono(Font.BOLD, 11));
         prix.setForeground(VERT);
         prix.setOpaque(true);
@@ -466,11 +533,9 @@ public class ParametreForm extends JPanel {
         g.gridy = 0;
         carte.add(enTete, g);
 
-        JLabel texte = new JLabel("<html>Le profil actif est rattaché au rôle "
-                + "<b>Opérateur Guichet</b>. Toute modification du thème FlatLaf, du symbole "
-                + "monétaire (Ar) ou des dictionnaires régionaux nécessite des privilèges "
-                + "<font color=\"#2563EB\">SYS_ADMIN</font> via le fichier de configuration "
-                + "centralisé.</html>");
+        JLabel texte = new JLabel("<html>Les préférences d'affichage (thème, langue, devise) "
+                + "sont modifiables par l'opérateur depuis les réglages ci-dessous. La gestion "
+                + "des comptes et des rôles reste centralisée côté base PostgreSQL.</html>");
         texte.setFont(police(Font.PLAIN, 11));
         texte.setForeground(TEXTE_SECONDAIRE);
         g.gridy = 1;
@@ -559,8 +624,9 @@ public class ParametreForm extends JPanel {
         carte.ajouter(alignerDroite(btn), 12);
 
         Carte pref = new Carte(Icone.Type.PARAMETRE,
-                "Préférences d'affichage",
-                "Aperçu des paramètres d'interface et d'affichage actuellement appliqués à votre session.",
+                I18n.t("pref.titre", "Préférences d'affichage"),
+                I18n.t("pref.sous_titre",
+                        "Réglez le thème, la langue et la devise appliqués à votre session."),
                 chipSession());
         pref.ajouter(articlePrefTheme(), 16);
         pref.ajouter(articlePrefLangue(), 14);
@@ -573,8 +639,8 @@ public class ParametreForm extends JPanel {
                 new RoundedBorder(BORDURE, 2, 1),
                 BorderFactory.createEmptyBorder(10, 12, 10, 12)));
         aide.add(new JLabel(new Icone(Icone.Type.LISTE, 20, TEXTE_SECONDAIRE)), BorderLayout.WEST);
-        JLabel aideTexte = new JLabel("Ces préférences reflètent la configuration système standard "
-                + "de l'application desktop SmartPark (non modifiables en session opérateur).");
+        JLabel aideTexte = new JLabel("Vos préférences sont enregistrées automatiquement et "
+                + "restaurées au prochain démarrage de l'application.");
         aideTexte.setFont(police(Font.PLAIN, 11));
         aideTexte.setForeground(TEXTE);
         aide.add(aideTexte, BorderLayout.CENTER);
@@ -618,14 +684,15 @@ public class ParametreForm extends JPanel {
         g.anchor = GridBagConstraints.WEST;
         JPanel titres = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         titres.setOpaque(false);
-        JLabel t = new JLabel("Thème de l'interface");
+        JLabel t = new JLabel(I18n.t("pref.theme", "Thème de l'interface"));
         t.setFont(police(Font.BOLD, 16));
         t.setForeground(TEXTE);
         titres.add(t);
-        titres.add(vignette("Standard Java Swing"));
+        titres.add(vignette("Java Swing (UIManager)"));
         g.gridy = 0;
         infos.add(titres, g);
-        JLabel d = new JLabel("Apparence visuelle de la console de gestion.");
+        JLabel d = new JLabel(I18n.t("pref.theme.desc",
+                "Apparence visuelle de la console de gestion."));
         d.setFont(police(Font.PLAIN, 11));
         d.setForeground(TEXTE_SECONDAIRE);
         g.gridy = 1;
@@ -633,17 +700,18 @@ public class ParametreForm extends JPanel {
         infos.add(d, g);
         JPanel meta = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         meta.setOpaque(false);
-        JLabel pf = new JLabel("Profil moteur :");
+        JLabel pf = new JLabel("Moteur :");
         pf.setFont(police(Font.PLAIN, 11));
         pf.setForeground(OUTLINE);
         meta.add(pf);
-        JLabel flat = new JLabel("com.formdev.flatlaf.FlatLightLaf");
-        flat.setFont(policeMono(Font.PLAIN, 9));
-        flat.setForeground(TEXTE);
-        flat.setOpaque(true);
-        flat.setBackground(CHIP_FOND);
-        flat.setBorder(BorderFactory.createEmptyBorder(1, 6, 1, 6));
-        meta.add(flat);
+        JLabel moteur = new JLabel(Theme.estSombre()
+                ? "Swing Dark (personnalise)" : "Swing Light (personnalise)");
+        moteur.setFont(policeMono(Font.PLAIN, 9));
+        moteur.setForeground(TEXTE);
+        moteur.setOpaque(true);
+        moteur.setBackground(CHIP_FOND);
+        moteur.setBorder(BorderFactory.createEmptyBorder(1, 6, 1, 6));
+        meta.add(moteur);
         g.gridy = 2;
         g.insets = new Insets(6, 0, 0, 0);
         infos.add(meta, g);
@@ -656,28 +724,27 @@ public class ParametreForm extends JPanel {
         c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.EAST;
-        JPanel chip = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        chip.setOpaque(true);
-        chip.setBackground(CHIP_FOND);
-        chip.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-        chip.add(new PastilleDot(VERT, 10));
-        JLabel clair = new JLabel("Thème Clair (FlatLaf Light)");
-        clair.setFont(police(Font.BOLD, 12));
-        clair.setForeground(TEXTE);
-        chip.add(clair);
-        chip.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        JComboBox<String> combo = new JComboBox<>(new String[]{
+            I18n.t("pref.theme.clair", "Clair"), I18n.t("pref.theme.sombre", "Sombre")});
+        combo.setSelectedIndex(Theme.estSombre() ? 1 : 0);
+        styleCombo(combo);
+        combo.addActionListener(e -> appliquerTheme(combo.getSelectedIndex() == 1));
         c.gridy = 0;
         c.insets = new Insets(0, 8, 0, 0);
-        droite.add(chip, c);
-        JPanel mini = new JPanel(new BorderLayout());
-        mini.setOpaque(false);
-        JLabel lblMini = new JLabel(nonModifiable());
-        lblMini.setFont(police(Font.PLAIN, 11));
-        lblMini.setForeground(OUTLINE);
-        mini.add(lblMini, BorderLayout.EAST);
+        droite.add(combo, c);
+
+        JPanel statut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        statut.setOpaque(false);
+        statut.add(new PastilleDot(VERT, 8));
+        JLabel s = new JLabel(I18n.t("pref.statut.theme", "Thème appliqué") + " : "
+                + (Theme.estSombre() ? I18n.t("pref.theme.sombre", "Sombre")
+                        : I18n.t("pref.theme.clair", "Clair")));
+        s.setFont(police(Font.BOLD, 11));
+        s.setForeground(VERT);
+        statut.add(s);
         c.gridy = 1;
-        c.insets = new Insets(4, 0, 0, 0);
-        droite.add(mini, c);
+        c.insets = new Insets(6, 0, 0, 0);
+        droite.add(statut, c);
 
         JPanel article = new JPanel(new BorderLayout(12, 0));
         article.setOpaque(true);
@@ -703,14 +770,15 @@ public class ParametreForm extends JPanel {
         g.anchor = GridBagConstraints.WEST;
         JPanel titres = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         titres.setOpaque(false);
-        JLabel t = new JLabel("Langue de l'interface");
+        JLabel t = new JLabel(I18n.t("pref.langue", "Langue de l'interface"));
         t.setFont(police(Font.BOLD, 16));
         t.setForeground(TEXTE);
         titres.add(t);
         titres.add(vignette("Locale i18n"));
         g.gridy = 0;
         infos.add(titres, g);
-        JLabel d = new JLabel("Langue utilisée pour l'ensemble des modules, formulaires et alertes.");
+        JLabel d = new JLabel(I18n.t("pref.langue.desc",
+                "Langue utilisée pour les modules traduits, les formulaires et les alertes."));
         d.setFont(police(Font.PLAIN, 11));
         d.setForeground(TEXTE_SECONDAIRE);
         g.gridy = 1;
@@ -722,22 +790,16 @@ public class ParametreForm extends JPanel {
         enc.setFont(police(Font.PLAIN, 11));
         enc.setForeground(OUTLINE);
         meta.add(enc);
-        JLabel utf = new JLabel("UTF-8");
-        utf.setFont(policeMono(Font.PLAIN, 9));
-        utf.setForeground(TEXTE);
-        meta.add(utf);
+        meta.add(monoSom("UTF-8"));
         JLabel sep = new JLabel("•");
         sep.setFont(police(Font.PLAIN, 11));
         sep.setForeground(OUTLINE);
         meta.add(sep);
-        JLabel res = new JLabel("Fichier de ressources :");
+        JLabel res = new JLabel("Ressources :");
         res.setFont(police(Font.PLAIN, 11));
         res.setForeground(OUTLINE);
         meta.add(res);
-        JLabel props = new JLabel("Messages_fr_FR.properties");
-        props.setFont(policeMono(Font.PLAIN, 9));
-        props.setForeground(TEXTE);
-        meta.add(props);
+        meta.add(monoSom(fichierLangue(I18n.langue())));
         g.gridy = 2;
         g.insets = new Insets(6, 0, 0, 0);
         infos.add(meta, g);
@@ -750,33 +812,28 @@ public class ParametreForm extends JPanel {
         c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.EAST;
-        JPanel chip = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        chip.setOpaque(true);
-        chip.setBackground(CHIP_FOND);
-        chip.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-        chip.add(new PastilleDot(PRIMAIRE, 10));
-        JLabel fr = new JLabel("Français (FR)");
-        fr.setFont(police(Font.BOLD, 12));
-        fr.setForeground(TEXTE);
-        chip.add(fr);
+        JComboBox<String> combo = new JComboBox<>(new String[]{
+            I18n.t("pref.langue.fr", "Français"),
+            I18n.t("pref.langue.mg", "Malagasy"),
+            I18n.t("pref.langue.en", "Anglais")});
+        combo.setSelectedIndex(indexLangue(I18n.langue()));
+        styleCombo(combo);
+        combo.addActionListener(e -> appliquerLangue(langueDeIndex(combo.getSelectedIndex())));
         c.gridy = 0;
         c.insets = new Insets(0, 8, 0, 0);
-        droite.add(chip, c);
-        JPanel mini = new JPanel(new BorderLayout());
-        mini.setOpaque(false);
+        droite.add(combo, c);
+
+        JPanel statut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        statut.setOpaque(false);
+        statut.add(new JLabel(new Icone(Icone.Type.COCHE, 14, VERT)));
+        JLabel s = new JLabel(I18n.t("pref.statut.langue", "Langue appliquée") + " : "
+                + nomLangue(I18n.langue()));
+        s.setFont(police(Font.BOLD, 10));
+        s.setForeground(VERT);
+        statut.add(s);
         c.gridy = 1;
-        c.insets = new Insets(4, 0, 0, 0);
-        droite.add(mini, c);
-        JPanel conf = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
-        conf.setOpaque(false);
-        conf.add(new JLabel(new Icone(Icone.Type.COCHE, 14, VERT)));
-        JLabel lsc = new JLabel("LANGUE SYSTÈME CONFIGURÉE");
-        lsc.setFont(police(Font.BOLD, 9));
-        lsc.setForeground(VERT);
-        conf.add(lsc);
-        c.gridy = 2;
-        c.insets = new Insets(4, 0, 0, 0);
-        droite.add(conf, c);
+        c.insets = new Insets(6, 0, 0, 0);
+        droite.add(statut, c);
 
         JPanel article = new JPanel(new BorderLayout(12, 0));
         article.setOpaque(true);
@@ -802,14 +859,15 @@ public class ParametreForm extends JPanel {
         g.anchor = GridBagConstraints.WEST;
         JPanel titres = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         titres.setOpaque(false);
-        JLabel t = new JLabel("Format de devise et montants");
+        JLabel t = new JLabel(I18n.t("pref.devise", "Format de devise et montants"));
         t.setFont(police(Font.BOLD, 16));
         t.setForeground(TEXTE);
         titres.add(t);
         titres.add(vignette("Comptabilité Borne"));
         g.gridy = 0;
         infos.add(titres, g);
-        JLabel d = new JLabel("Unité monétaire appliquée aux calculs de stationnement et encaissements.");
+        JLabel d = new JLabel(I18n.t("pref.devise.desc",
+                "Unité monétaire appliquée à l'affichage des montants de stationnement."));
         d.setFont(police(Font.PLAIN, 11));
         d.setForeground(TEXTE_SECONDAIRE);
         g.gridy = 1;
@@ -821,17 +879,17 @@ public class ParametreForm extends JPanel {
         sym.setFont(police(Font.PLAIN, 11));
         sym.setForeground(OUTLINE);
         meta.add(sym);
-        meta.add(monoSom("Ar"));
+        meta.add(monoSom(Devise.symbole()));
         JLabel iso = new JLabel("ISO :");
         iso.setFont(police(Font.PLAIN, 11));
         iso.setForeground(OUTLINE);
         meta.add(iso);
-        meta.add(monoSom("MGA"));
+        meta.add(monoSom(Devise.courante()));
         JLabel prec = new JLabel("Précision :");
         prec.setFont(police(Font.PLAIN, 11));
         prec.setForeground(OUTLINE);
         meta.add(prec);
-        meta.add(monoSom("Entier"));
+        meta.add(monoSom(Devise.decimales() == 0 ? "Entier" : "2 décimales"));
         g.gridy = 2;
         g.insets = new Insets(6, 0, 0, 0);
         infos.add(meta, g);
@@ -844,29 +902,26 @@ public class ParametreForm extends JPanel {
         c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.EAST;
-        JPanel chip = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        chip.setOpaque(true);
-        chip.setBackground(CHIP_FOND);
-        chip.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-        JLabel ar = new JLabel("Ar");
-        ar.setFont(policeMono(Font.BOLD, 14));
-        ar.setForeground(VERT);
-        chip.add(ar);
-        JLabel ariary = new JLabel("Ariary (Ar)");
-        ariary.setFont(police(Font.BOLD, 12));
-        ariary.setForeground(TEXTE);
-        chip.add(ariary);
+        JComboBox<String> combo = new JComboBox<>(new String[]{
+            I18n.t("pref.devise.mga", "Ariary (Ar)"),
+            I18n.t("pref.devise.usd", "Dollar (USD)"),
+            I18n.t("pref.devise.gbp", "Livre sterling (GBP)")});
+        combo.setSelectedIndex(indexDevise(Devise.courante()));
+        styleCombo(combo);
+        combo.addActionListener(e -> appliquerDevise(deviseDeIndex(combo.getSelectedIndex())));
         c.gridy = 0;
         c.insets = new Insets(0, 8, 0, 0);
-        droite.add(chip, c);
-        JPanel ex = new JPanel(new BorderLayout());
+        droite.add(combo, c);
+
+        JLabel exemple = new JLabel(I18n.t("pref.exemple", "Exemple") + " : "
+                + Devise.formater(4500) + " / ticket");
+        exemple.setFont(policeMono(Font.PLAIN, 10));
+        exemple.setForeground(VERT);
+        JPanel ex = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         ex.setOpaque(false);
-        JLabel exemple = new JLabel("Exemple : 4 500 Ar / ticket");
-        exemple.setFont(policeMono(Font.PLAIN, 9));
-        exemple.setForeground(OUTLINE);
-        ex.add(exemple, BorderLayout.EAST);
+        ex.add(exemple);
         c.gridy = 1;
-        c.insets = new Insets(4, 0, 0, 0);
+        c.insets = new Insets(6, 0, 0, 0);
         droite.add(ex, c);
 
         JPanel article = new JPanel(new BorderLayout(12, 0));
@@ -880,8 +935,118 @@ public class ParametreForm extends JPanel {
         return article;
     }
 
-    private static String nonModifiable() {
-        return "Actif par défaut du système";
+    /** Applique et enregistre le theme, puis reconstruit l'apercu. */
+    private void appliquerTheme(boolean sombre) {
+        String mode = sombre ? Theme.SOMBRE : Theme.CLAIR;
+        if (!mode.equals(PreferencesApp.getTheme())) {
+            Theme.appliquerEtEnregistrer(mode);
+            SwingUtilities.invokeLater(() -> {
+                construire();
+                Theme.rafraichirFenetres();
+            });
+        }
+    }
+
+    /** Applique et enregistre la langue, reconstruit et notifie le Dashboard. */
+    private void appliquerLangue(String langue) {
+        if (langue == null || langue.equals(PreferencesApp.getLangue())) {
+            return;
+        }
+        PreferencesApp.setLangue(langue);
+        I18n.charger(langue);
+        SwingUtilities.invokeLater(() -> {
+            construire();
+            if (surPreferencesChangees != null) {
+                surPreferencesChangees.run();
+            }
+        });
+    }
+
+    /** Applique et enregistre la devise, reconstruit et notifie le Dashboard. */
+    private void appliquerDevise(String devise) {
+        if (devise == null || devise.equals(PreferencesApp.getDevise())) {
+            return;
+        }
+        PreferencesApp.setDevise(devise);
+        SwingUtilities.invokeLater(() -> {
+            construire();
+            if (surPreferencesChangees != null) {
+                surPreferencesChangees.run();
+            }
+        });
+    }
+
+    // --- Correspondances langue <-> index du selecteur ---
+
+    private static int indexLangue(String langue) {
+        if (PreferencesApp.LANGUE_MG.equals(langue)) {
+            return 1;
+        }
+        if (PreferencesApp.LANGUE_EN.equals(langue)) {
+            return 2;
+        }
+        return 0;
+    }
+
+    private static String langueDeIndex(int index) {
+        if (index == 1) {
+            return PreferencesApp.LANGUE_MG;
+        }
+        if (index == 2) {
+            return PreferencesApp.LANGUE_EN;
+        }
+        return PreferencesApp.LANGUE_FR;
+    }
+
+    private static String nomLangue(String langue) {
+        if (PreferencesApp.LANGUE_MG.equals(langue)) {
+            return I18n.t("pref.langue.mg", "Malagasy");
+        }
+        if (PreferencesApp.LANGUE_EN.equals(langue)) {
+            return I18n.t("pref.langue.en", "Anglais");
+        }
+        return I18n.t("pref.langue.fr", "Français");
+    }
+
+    private static String fichierLangue(String langue) {
+        if (PreferencesApp.LANGUE_MG.equals(langue)) {
+            return "Messages_mg.properties";
+        }
+        if (PreferencesApp.LANGUE_EN.equals(langue)) {
+            return "Messages_en.properties";
+        }
+        return "Messages_fr.properties";
+    }
+
+    // --- Correspondances devise <-> index du selecteur ---
+
+    private static int indexDevise(String devise) {
+        if (PreferencesApp.DEVISE_USD.equals(devise)) {
+            return 1;
+        }
+        if (PreferencesApp.DEVISE_GBP.equals(devise)) {
+            return 2;
+        }
+        return 0;
+    }
+
+    private static String deviseDeIndex(int index) {
+        if (index == 1) {
+            return PreferencesApp.DEVISE_USD;
+        }
+        if (index == 2) {
+            return PreferencesApp.DEVISE_GBP;
+        }
+        return PreferencesApp.DEVISE_MGA;
+    }
+
+    /** Style commun des listes deroulantes de preference. */
+    private void styleCombo(JComboBox<String> combo) {
+        combo.setFont(police(Font.PLAIN, 12));
+        combo.setBackground(CARTE);
+        combo.setForeground(TEXTE);
+        combo.setPreferredSize(new Dimension(190, 34));
+        combo.setFocusable(false);
     }
 
     private static JLabel monoSom(String texte) {

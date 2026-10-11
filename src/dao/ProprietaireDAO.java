@@ -69,6 +69,39 @@ public class ProprietaireDAO {
         }
     }
 
+    /**
+     * Insere un proprietaire et retourne l'identifiant genere (ou -1 en cas
+     * d'echec). Utilise par la creation rapide depuis la page Entree afin de
+     * selectionner immediatement le proprietaire cree.
+     */
+    public int ajouterAvecId(Proprietaire p) {
+        String sql = "INSERT INTO proprietaire (nom, prenom, telephone) VALUES (?, ?, ?)";
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return -1;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql,
+                    java.sql.Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, p.getNom());
+                ps.setString(2, p.getPrenom());
+                ps.setString(3, p.getTelephone());
+                if (ps.executeUpdate() != 1) {
+                    return -1;
+                }
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int id = rs.getInt(1);
+                        p.setIdProprietaire(id);
+                        return id;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur ProprietaireDAO.ajouterAvecId : " + e.getMessage());
+        }
+        return -1;
+    }
+
     /** Vrai si la modification a touche exactement une ligne. */
     public boolean modifier(Proprietaire p) {
         String sql = "UPDATE proprietaire SET nom = ?, prenom = ?, telephone = ? "

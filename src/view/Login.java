@@ -454,6 +454,10 @@ public class Login extends javax.swing.JFrame {
         }
         //</editor-fold>
 
+        // Applique le theme et la langue enregistres (apres le Look and Feel).
+        util.Theme.appliquerAuDemarrage();
+        util.I18n.charger(util.PreferencesApp.getLangue());
+
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new Login().setVisible(true));
     }

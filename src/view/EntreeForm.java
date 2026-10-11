@@ -1,6 +1,7 @@
 package view;
 
 import dao.PlaceDAO;
+import dao.ProprietaireDAO;
 import dao.ResultatOperation;
 import dao.StationnementDAO;
 import dao.VehiculeDAO;
@@ -9,6 +10,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -21,6 +23,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.geom.Ellipse2D;
@@ -33,20 +36,25 @@ import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.ListCellRenderer;
 import javax.swing.Scrollable;
+import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import model.Place;
+import model.Proprietaire;
 import model.Stationnement;
 import model.Vehicule;
 import util.DateUtils;
+import util.NotificationCentre;
 
 /**
  * Enregistre l'entree d'un vehicule dans une place libre.
@@ -63,6 +71,8 @@ public class EntreeForm extends JPanel {
     private final JButton btnEnregistrer = new BoutonStyle("Enregistrer l'entrée",
             BoutonStyle.Type.PRIMAIRE);
     private final JButton btnAnnuler = new BoutonStyle("Annuler", BoutonStyle.Type.NEUTRE);
+    private final JButton btnNouveauVehicule = new BoutonStyle("+ Nouveau véhicule",
+            BoutonStyle.Type.NEUTRE);
 
     // Panneaux d'information (Details du vehicule / Emplacement selectionne).
     private final JLabel lblVehEtat = new JLabel();
@@ -79,6 +89,7 @@ public class EntreeForm extends JPanel {
     private final VehiculeDAO vehiculeDAO = new VehiculeDAO();
     private final PlaceDAO placeDAO = new PlaceDAO();
     private final StationnementDAO stationnementDAO = new StationnementDAO();
+    private final ProprietaireDAO proprietaireDAO = new ProprietaireDAO();
 
     // ---------------------------------------------------------------------
     // PALETTE DE COULEURS (version claire)
@@ -326,11 +337,19 @@ public class EntreeForm extends JPanel {
         c.insets = new Insets(0, 0, 6, 0);
         groupe.add(ligneLibelle("Véhicule (Immatriculation / Modèle)", Icone.Type.VEHICULE,
                 "REQUIS [JComboBox]"), c);
+
+        // Selection du vehicule + acces a la creation rapide sans quitter la page.
+        JPanel ligneCombo = new JPanel(new BorderLayout(8, 0));
+        ligneCombo.setOpaque(false);
+        ligneCombo.add(comboVehicule, BorderLayout.CENTER);
+        btnNouveauVehicule.addActionListener(e -> ouvrirNouveauVehicule());
+        ligneCombo.add(btnNouveauVehicule, BorderLayout.EAST);
+
         c.gridy = 1;
-        groupe.add(comboVehicule, c);
+        groupe.add(ligneCombo, c);
         c.gridy = 2;
         c.insets = new Insets(6, 0, 0, 0);
-        groupe.add(aide("Seuls les véhicules enregistrés dans la base apparaissent ici."), c);
+        groupe.add(aide("Sélectionnez un véhicule existant ou créez-en un nouveau."), c);
         return groupe;
     }
 
@@ -632,6 +651,14 @@ public class EntreeForm extends JPanel {
         majBoutonValider();
     }
 
+    /**
+     * Recharge les listes depuis la base. Appele par le Dashboard a l'ouverture
+     * de la page afin que les vehicules/places crees ailleurs apparaissent.
+     */
+    public void rafraichir() {
+        actualiser();
+    }
+
     private void chargerVehiculesDisponibles() {
         // Vehicules ayant deja un stationnement EN_COURS.
         List<Integer> gares = new ArrayList<>();
@@ -739,12 +766,291 @@ public class EntreeForm extends JPanel {
                 = stationnementDAO.creerEntree(vehicule.getIdVehicule(), place.getIdPlace());
 
         if (res.estSucces()) {
+            NotificationCentre.entree(vehicule.getImmatriculation(),
+                    place.getNumeroPlace());
             JOptionPane.showMessageDialog(this,
                     "Entree enregistree : " + vehicule.getImmatriculation()
                     + " en place " + place.getNumeroPlace() + ".");
             actualiser();
         } else {
             JOptionPane.showMessageDialog(this, res.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // CREATION RAPIDE (vehicule / proprietaire) SANS QUITTER L'ENTREE
+    // ---------------------------------------------------------------------
+    /**
+     * Ouvre la fenetre modale de creation d'un vehicule. En cas de succes, la
+     * liste est rechargee et le vehicule nouvellement cree est preselectionne :
+     * l'operateur n'a plus qu'a choisir une place et valider.
+     */
+    private void ouvrirNouveauVehicule() {
+        DialogueVehicule dialogue = new DialogueVehicule();
+        dialogue.setVisible(true);
+        Vehicule cree = dialogue.getResultat();
+        if (cree != null) {
+            chargerVehiculesDisponibles();
+            majDisponibles();
+            selectionnerVehicule(cree.getIdVehicule());
+        }
+    }
+
+    /** Selectionne dans la liste le vehicule dont l'identifiant est fourni. */
+    private void selectionnerVehicule(int idVehicule) {
+        for (int i = 0; i < comboVehicule.getItemCount(); i++) {
+            if (comboVehicule.getItemAt(i).getIdVehicule() == idVehicule) {
+                comboVehicule.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    /** Champ de saisie stylise (coherent avec les formulaires existants). */
+    private JTextField champTexte() {
+        JTextField champ = new JTextField();
+        champ.setOpaque(true);
+        champ.setBackground(CARTE);
+        champ.setForeground(TEXTE);
+        champ.setCaretColor(PRIMAIRE);
+        champ.setFont(police(Font.PLAIN, 13));
+        champ.setPreferredSize(new Dimension(240, 34));
+        champ.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDURE_CHAMP),
+                BorderFactory.createEmptyBorder(5, 9, 5, 9)));
+        return champ;
+    }
+
+    private static JLabel etiquette(String texte) {
+        JLabel label = new JLabel(texte);
+        label.setFont(police(Font.BOLD, 12));
+        label.setForeground(LABEL);
+        return label;
+    }
+
+    /** Style de combo autonome : aucun ecouteur lie a la page Entree. */
+    private <T> void styliserCombo(JComboBox<T> combo, String placeholder) {
+        combo.setOpaque(true);
+        combo.setBackground(CARTE);
+        combo.setForeground(TEXTE);
+        combo.setFont(police(Font.PLAIN, 13));
+        combo.setPreferredSize(new Dimension(240, 34));
+        combo.setBorder(BorderFactory.createLineBorder(BORDURE_CHAMP));
+        combo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        combo.setRenderer(new ComboRenderer(placeholder));
+    }
+
+    /** Carte blanche commune aux fenetres de creation rapide. */
+    private JPanel carteDialogue() {
+        JPanel carte = new JPanel(new GridBagLayout());
+        carte.setOpaque(true);
+        carte.setBackground(CARTE);
+        carte.setBorder(BorderFactory.createCompoundBorder(
+                new RoundedBorder(BORDURE, 10, 1, new Insets(0, 0, 0, 0)),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+        return carte;
+    }
+
+    /** Ajoute une ligne "libelle + champ" dans une grille de dialogue. */
+    private static void ajouterLigne(JPanel carte, int ligne, String titre,
+            JComponent champ) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.gridx = 0;
+        c.gridy = ligne;
+        c.weightx = 0;
+        c.insets = new Insets(0, 0, 10, 12);
+        carte.add(etiquette(titre), c);
+        c.gridx = 1;
+        c.weightx = 1;
+        c.insets = new Insets(0, 0, 10, 0);
+        carte.add(champ, c);
+    }
+
+    /** Fenetre modale de creation rapide d'un vehicule. */
+    private class DialogueVehicule extends JDialog {
+
+        private final JTextField txtImmatriculation = champTexte();
+        private final JTextField txtMarque = champTexte();
+        private final JTextField txtCouleur = champTexte();
+        private final JComboBox<String> comboType
+                = new JComboBox<>(new String[]{"Moto", "Voiture", "Camion"});
+        private final JComboBox<Proprietaire> comboProprietaire = new JComboBox<>();
+        private Vehicule resultat;
+
+        DialogueVehicule() {
+            super(SwingUtilities.getWindowAncestor(EntreeForm.this),
+                    "Nouveau véhicule", Dialog.ModalityType.APPLICATION_MODAL);
+            styliserCombo(comboType, "Type de véhicule");
+            styliserCombo(comboProprietaire, "Sélectionner un propriétaire...");
+            construire();
+            chargerProprietaires();
+            pack();
+            setResizable(false);
+            setLocationRelativeTo(EntreeForm.this);
+        }
+
+        private void construire() {
+            JPanel racine = new JPanel(new BorderLayout());
+            racine.setOpaque(true);
+            racine.setBackground(FOND);
+            racine.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            JPanel carte = carteDialogue();
+            ajouterLigne(carte, 0, "Immatriculation", txtImmatriculation);
+            ajouterLigne(carte, 1, "Marque", txtMarque);
+            ajouterLigne(carte, 2, "Couleur", txtCouleur);
+            ajouterLigne(carte, 3, "Type", comboType);
+
+            // Proprietaire : liste des existants + creation rapide imbriquee.
+            JPanel ligneProprietaire = new JPanel(new BorderLayout(8, 0));
+            ligneProprietaire.setOpaque(false);
+            ligneProprietaire.add(comboProprietaire, BorderLayout.CENTER);
+            JButton btnNouveauProprietaire
+                    = new BoutonStyle("+ Nouveau", BoutonStyle.Type.NEUTRE);
+            btnNouveauProprietaire.addActionListener(e -> ouvrirNouveauProprietaire());
+            ligneProprietaire.add(btnNouveauProprietaire, BorderLayout.EAST);
+            ajouterLigne(carte, 4, "Propriétaire", ligneProprietaire);
+
+            racine.add(carte, BorderLayout.CENTER);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            actions.setOpaque(false);
+            actions.setBorder(BorderFactory.createEmptyBorder(16, 0, 0, 0));
+            JButton btnFermer = new BoutonStyle("Annuler", BoutonStyle.Type.NEUTRE);
+            btnFermer.addActionListener(e -> dispose());
+            JButton btnValider = new BoutonStyle("Enregistrer", BoutonStyle.Type.PRIMAIRE);
+            btnValider.addActionListener(e -> enregistrer());
+            actions.add(btnFermer);
+            actions.add(btnValider);
+            racine.add(actions, BorderLayout.SOUTH);
+
+            setContentPane(racine);
+        }
+
+        private void chargerProprietaires() {
+            comboProprietaire.removeAllItems();
+            for (Proprietaire p : proprietaireDAO.lister()) {
+                comboProprietaire.addItem(p);
+            }
+        }
+
+        private void ouvrirNouveauProprietaire() {
+            DialogueProprietaire dialogue = new DialogueProprietaire(this);
+            dialogue.setVisible(true);
+            Proprietaire cree = dialogue.getResultat();
+            if (cree != null) {
+                comboProprietaire.addItem(cree);
+                comboProprietaire.setSelectedItem(cree);
+            }
+        }
+
+        private void enregistrer() {
+            Proprietaire proprietaire = (Proprietaire) comboProprietaire.getSelectedItem();
+            if (proprietaire == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Veuillez sélectionner ou créer un propriétaire.");
+                return;
+            }
+            String immatriculation = txtImmatriculation.getText().trim().toUpperCase();
+            if (immatriculation.isEmpty() || txtMarque.getText().trim().isEmpty()
+                    || txtCouleur.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs !");
+                return;
+            }
+            if (vehiculeDAO.estImmatriculationUtilisee(immatriculation, null)) {
+                JOptionPane.showMessageDialog(this,
+                        "Cette immatriculation existe déjà dans la base.");
+                return;
+            }
+            Vehicule v = new Vehicule(immatriculation,
+                    txtMarque.getText().trim(),
+                    txtCouleur.getText().trim(),
+                    (String) comboType.getSelectedItem(),
+                    proprietaire.getIdProprietaire());
+            int id = vehiculeDAO.ajouterAvecId(v);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Erreur lors de l'ajout du véhicule "
+                        + "(base indisponible ou données invalides).");
+                return;
+            }
+            v.setNomProprietaire(proprietaire.getNom() + " " + proprietaire.getPrenom());
+            resultat = v;
+            dispose();
+        }
+
+        Vehicule getResultat() {
+            return resultat;
+        }
+    }
+
+    /** Fenetre modale de creation rapide d'un proprietaire. */
+    private class DialogueProprietaire extends JDialog {
+
+        private final JTextField txtNom = champTexte();
+        private final JTextField txtPrenom = champTexte();
+        private final JTextField txtTelephone = champTexte();
+        private Proprietaire resultat;
+
+        DialogueProprietaire(Window proprietaire) {
+            super(proprietaire, "Nouveau propriétaire",
+                    Dialog.ModalityType.APPLICATION_MODAL);
+            construire();
+            pack();
+            setResizable(false);
+            setLocationRelativeTo(proprietaire);
+        }
+
+        private void construire() {
+            JPanel racine = new JPanel(new BorderLayout());
+            racine.setOpaque(true);
+            racine.setBackground(FOND);
+            racine.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            JPanel carte = carteDialogue();
+            ajouterLigne(carte, 0, "Nom", txtNom);
+            ajouterLigne(carte, 1, "Prénom", txtPrenom);
+            ajouterLigne(carte, 2, "Téléphone", txtTelephone);
+            racine.add(carte, BorderLayout.CENTER);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            actions.setOpaque(false);
+            actions.setBorder(BorderFactory.createEmptyBorder(16, 0, 0, 0));
+            JButton btnFermer = new BoutonStyle("Annuler", BoutonStyle.Type.NEUTRE);
+            btnFermer.addActionListener(e -> dispose());
+            JButton btnValider = new BoutonStyle("Enregistrer", BoutonStyle.Type.PRIMAIRE);
+            btnValider.addActionListener(e -> enregistrer());
+            actions.add(btnFermer);
+            actions.add(btnValider);
+            racine.add(actions, BorderLayout.SOUTH);
+
+            setContentPane(racine);
+        }
+
+        private void enregistrer() {
+            if (txtNom.getText().trim().isEmpty()
+                    || txtPrenom.getText().trim().isEmpty()
+                    || txtTelephone.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs !");
+                return;
+            }
+            Proprietaire p = new Proprietaire(txtNom.getText().trim(),
+                    txtPrenom.getText().trim(), txtTelephone.getText().trim());
+            int id = proprietaireDAO.ajouterAvecId(p);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Erreur lors de l'ajout du propriétaire "
+                        + "(base indisponible ou données invalides).");
+                return;
+            }
+            resultat = p;
+            dispose();
+        }
+
+        Proprietaire getResultat() {
+            return resultat;
         }
     }
 

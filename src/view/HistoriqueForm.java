@@ -64,7 +64,7 @@ public class HistoriqueForm extends JPanel {
 
     private final DefaultTableModel modeleTable = new DefaultTableModel(
             new String[]{"ID", "Vehicule", "Proprietaire", "Place",
-                "Date entree", "Date sortie", "Duree (h)", "Montant (Ar)", "Statut"}, 0) {
+                "Date entree", "Date sortie", "Duree (h)", "Montant (" + util.Devise.symbole() + ")", "Statut"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -301,7 +301,7 @@ public class HistoriqueForm extends JPanel {
                 DateUtils.format(s.getDateEntree()),
                 DateUtils.format(s.getDateSortie()),
                 s.getDuree(),
-                s.getMontant(),
+                util.Devise.formater(s.getMontant()),
                 s.getStatut()
             });
             compte++;
