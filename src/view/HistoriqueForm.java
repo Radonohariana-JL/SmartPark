@@ -19,11 +19,13 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -49,6 +51,16 @@ public class HistoriqueForm extends JPanel {
     private final JTextField txtRecherche = new JTextField(20);
     private final JButton btnRechercher = new BoutonStyle("Rechercher", BoutonStyle.Type.PRIMAIRE, false);
     private final JButton btnActualiser = new BoutonStyle("Actualiser", BoutonStyle.Type.NEUTRE, false);
+
+    /** Filtre d'affichage par statut (applique cote client, sans requete). */
+    private static final String FILTRE_TOUS = "Tous les statuts";
+    private static final String FILTRE_EN_COURS = "En cours";
+    private static final String FILTRE_TERMINE = "Terminé";
+    private final JComboBox<String> comboStatut = new JComboBox<>(
+            new String[]{FILTRE_TOUS, FILTRE_EN_COURS, FILTRE_TERMINE});
+
+    /** Derniere liste chargee (avant filtre de statut). */
+    private List<Stationnement> donnees = new ArrayList<>();
 
     private final DefaultTableModel modeleTable = new DefaultTableModel(
             new String[]{"ID", "Vehicule", "Proprietaire", "Place",
@@ -144,6 +156,7 @@ public class HistoriqueForm extends JPanel {
                 BorderFactory.createEmptyBorder(20, 20, 20, 20)));
 
         styleChamp(txtRecherche);
+        styleCombo(comboStatut);
 
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.HORIZONTAL;
@@ -166,6 +179,8 @@ public class HistoriqueForm extends JPanel {
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
+        actions.add(libelle("Statut"));
+        actions.add(comboStatut);
         actions.add(btnActualiser);
         actions.add(btnRechercher);
         barre.add(actions, BorderLayout.EAST);
@@ -175,9 +190,11 @@ public class HistoriqueForm extends JPanel {
         btnRechercher.addActionListener(e -> rechercher());
         btnActualiser.addActionListener(e -> {
             txtRecherche.setText("");
+            comboStatut.setSelectedItem(FILTRE_TOUS);
             actualiser();
         });
         txtRecherche.addActionListener(e -> rechercher());
+        comboStatut.addActionListener(e -> afficher());
         return carte;
     }
 
@@ -263,8 +280,19 @@ public class HistoriqueForm extends JPanel {
     }
 
     private void chargerDonnees(List<Stationnement> liste) {
+        donnees = liste;
+        afficher();
+    }
+
+    /** Remplit la table en appliquant le filtre de statut courant. */
+    private void afficher() {
+        String statut = statutFiltre();
         modeleTable.setRowCount(0);
-        for (Stationnement s : liste) {
+        int compte = 0;
+        for (Stationnement s : donnees) {
+            if (statut != null && !statut.equals(s.getStatut())) {
+                continue;
+            }
             modeleTable.addRow(new Object[]{
                 s.getIdStationnement(),
                 s.getImmatriculation(),
@@ -276,8 +304,21 @@ public class HistoriqueForm extends JPanel {
                 s.getMontant(),
                 s.getStatut()
             });
+            compte++;
         }
-        lblCompteur.setText(liste.size() + " resultat(s)");
+        lblCompteur.setText(compte + " resultat(s)");
+    }
+
+    /** Statut attendu selon le filtre, ou {@code null} pour "tous". */
+    private String statutFiltre() {
+        Object valeur = comboStatut.getSelectedItem();
+        if (FILTRE_EN_COURS.equals(valeur)) {
+            return "EN_COURS";
+        }
+        if (FILTRE_TERMINE.equals(valeur)) {
+            return "TERMINE";
+        }
+        return null;
     }
 
     // ---------------------------------------------------------------------
@@ -327,6 +368,16 @@ public class HistoriqueForm extends JPanel {
                 champ.setBorder(bordureChamp(1, BORDURE_CHAMP));
             }
         });
+    }
+
+    private void styleCombo(JComboBox<String> combo) {
+        combo.setOpaque(true);
+        combo.setBackground(CARTE);
+        combo.setForeground(TEXTE);
+        combo.setFont(police(Font.PLAIN, 13));
+        combo.setPreferredSize(new Dimension(150, 36));
+        combo.setMaximumSize(new Dimension(150, 36));
+        combo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private static Border bordureChamp(int epaisseur, Color couleur) {

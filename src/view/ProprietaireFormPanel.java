@@ -742,7 +742,9 @@ public class ProprietaireFormPanel extends JPanel {
 
     private void remplirFormulaire() {
         int ligne = table.getSelectedRow();
-        if (ligne >= 0) {
+        // Ne remplir la carte que lorsqu'elle est ouverte en mode edition,
+        // afin qu'une simple selection (ou le mode ajout) ne soit pas ecrasee.
+        if (ligne >= 0 && modeEdition) {
             txtNom.setText(String.valueOf(modeleTable.getValueAt(ligne, 1)));
             txtPrenom.setText(String.valueOf(modeleTable.getValueAt(ligne, 2)));
             txtTelephone.setText(String.valueOf(modeleTable.getValueAt(ligne, 3)));
@@ -821,7 +823,13 @@ public class ProprietaireFormPanel extends JPanel {
         Icone.Type icone = supprimer ? Icone.Type.SUPPRIMER : Icone.Type.MODIFIER;
         Color teinte = supprimer ? DESTRUCTIF : PRIMAIRE;
         Color survol = supprimer ? SURVOL_SUPPRIMER : SURVOL_MODIFIER;
-        return new BoutonStyle(icone, teinte, survol);
+        String libelle = supprimer ? "Supprimer" : "Modifier";
+        // Icone accessible : le glyphe n'a pas de texte, on fournit un libelle
+        // (tooltip + nom accessible) pour que les boutons restent clairs.
+        BoutonStyle bouton = new BoutonStyle(icone, teinte, survol);
+        bouton.setToolTipText(libelle);
+        bouton.getAccessibleContext().setAccessibleName(libelle);
+        return bouton;
     }
 
     // ---------------------------------------------------------------------

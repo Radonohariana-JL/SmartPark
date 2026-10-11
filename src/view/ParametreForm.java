@@ -1,6 +1,5 @@
 package view;
 
-import dao.TarifDAO;
 import dao.UtilisateurDAO;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -29,7 +28,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.BorderFactory;
@@ -43,22 +41,17 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
-import javax.swing.ListSelectionModel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.border.AbstractBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import model.Tarif;
 import model.Utilisateur;
 
 /**
- * Page Parametres : profil, securite (mot de passe), tarifs (administrateur)
+ * Page Parametres : profil, securite (mot de passe), tarif (gestion des prix)
  * et informations sur l'application.
  *
  * Coquille conforme a {@code reference/Parametre_model1/code.html}
@@ -100,7 +93,6 @@ public class ParametreForm extends JPanel {
 
     private final Utilisateur utilisateur;
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
-    private final TarifDAO tarifDAO = new TarifDAO();
 
     private final CardLayout cartes = new CardLayout();
     private final JPanel contenu = new JPanel(cartes);
@@ -116,17 +108,6 @@ public class ParametreForm extends JPanel {
     private final JPasswordField pwNouveau = new JPasswordField();
     private final JPasswordField pwConfirmation = new JPasswordField();
     private final ForceMotDePasse force = new ForceMotDePasse();
-
-    // Tarifs
-    private final JTextField txtPrix = new JTextField();
-    private final DefaultTableModel modeleTarifs = new DefaultTableModel(
-            new String[]{"Type de vehicule", "Prix par heure (Ar)"}, 0) {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-    };
-    private final JTable tableTarifs = new JTable(modeleTarifs);
 
     private Runnable surProfilModifie;
 
@@ -243,7 +224,7 @@ public class ParametreForm extends JPanel {
         nav.setOpaque(false);
         ajouterNav(nav, "Mon compte", Icone.Type.UTILISATEUR, "profil");
         ajouterNav(nav, "Sécurité", Icone.Type.CADENAS, "securite");
-        ajouterNav(nav, "Tarifs", Icone.Type.TARIF, "tarifs");
+        ajouterNav(nav, "Tarif", Icone.Type.TARIF, "tarifs");
         ajouterNav(nav, "Informations de l'application", Icone.Type.LISTE, "apropos");
         return nav;
     }
@@ -1031,177 +1012,17 @@ public class ParametreForm extends JPanel {
     }
 
     // ---------------------------------------------------------------------
-    // PAGE TARIFS (administrateur)
+    // PAGE TARIFS (onglet "Tarif")
     // ---------------------------------------------------------------------
+    /**
+     * Reutilise l'interface existante de gestion des tarifs ({@link TarifForm})
+     * au lieu d'en dupliquer une seconde. {@code TarifForm} assure la
+     * consultation et la modification des prix via {@code TarifDAO} et
+     * PostgreSQL ; seul son en-tete de page est masque car l'onglet de
+     * Parametres fournit deja le sien.
+     */
     private JComponent creerPageTarifs() {
-        boolean admin = utilisateur != null && "ADMIN".equalsIgnoreCase(
-                utilisateur.getRole() == null ? "" : utilisateur.getRole().trim());
-
-        if (!admin) {
-            Carte carte = new Carte(Icone.Type.TARIF, "Tarifs par type de véhicule",
-                    "Paramétrage de la grille horaire.");
-            JLabel msg = new JLabel("Réservé aux administrateurs.");
-            msg.setFont(police(Font.PLAIN, 13));
-            msg.setForeground(TEXTE_SECONDAIRE);
-            carte.ajouter(msg, 14);
-            return page(carte);
-        }
-
-        tableTarifs.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tableTarifs.setFillsViewportHeight(true);
-        tableTarifs.setRowHeight(46);
-        tableTarifs.setShowVerticalLines(false);
-        tableTarifs.setShowHorizontalLines(false);
-        tableTarifs.setIntercellSpacing(new Dimension(0, 0));
-        tableTarifs.setSelectionBackground(SELECTION);
-        tableTarifs.setSelectionForeground(TEXTE);
-        tableTarifs.setFont(police(Font.PLAIN, 13));
-        tableTarifs.getTableHeader().setReorderingAllowed(false);
-        tableTarifs.getTableHeader().setPreferredSize(new Dimension(0, 38));
-        tableTarifs.getTableHeader().setDefaultRenderer(new EnteteRenderer());
-        tableTarifs.setDefaultRenderer(Object.class, new CelluleRenderer());
-        tableTarifs.getSelectionModel().addListSelectionListener(e -> {
-            int ligne = tableTarifs.getSelectedRow();
-            if (ligne >= 0) {
-                txtPrix.setText(String.valueOf(modeleTarifs.getValueAt(ligne, 1)));
-            }
-        });
-
-        chargerTarifs();
-
-        Carte carte = new Carte(Icone.Type.TARIF, "Gestion des tarifs",
-                "Consultez et modifiez les tarifs horaires applicables aux différents types de véhicules.",
-                chipRegime());
-
-        JPanel metriques = new JPanel(new GridLayout(0, 3, 10, 0));
-        metriques.setOpaque(false);
-        int nbTypes = modeleTarifs.getRowCount();
-        String types = listeTypes();
-        metriques.add(miniStat("Types de véhicules tarifés", String.valueOf(nbTypes),
-                types.isEmpty() ? "Aucun type configuré" : types,
-                Icone.Type.LISTE, SELECTION, PRIMAIRE,
-                "CATÉGORIES", nbTypes > 0 ? "100% ACTIFS" : "AUCUN", VERT));
-        metriques.add(miniStat("Mode de tarification", "Horaire",
-                "Calcul au quart d'heure ou heure entamée",
-                Icone.Type.CLOCHE, BLEU_FOND, PRIMAIRE,
-                "GRANULARITÉ: 15 MIN", "AUTO-COMPUTE", PRIMAIRE));
-        metriques.add(miniStat("Devise de règlement", "Ariary (Ar)",
-                "Monnaie nationale MGA",
-                Icone.Type.TARIF, VERT_FOND, VERT,
-                "ISO: MGA 969", "ENCAISSEMENT", VERT));
-        carte.ajouter(metriques, 16);
-
-        carte.ajouter(creerTableTarifs(), 16);
-
-        return page(carte);
-    }
-
-    private JPanel creerTableTarifs() {
-        JPanel panneau = new JPanel(new BorderLayout());
-        panneau.setOpaque(true);
-        panneau.setBackground(CARTE);
-        panneau.setBorder(new RoundedBorder(BORDURE, 2, 1));
-
-        JScrollPane defilement = new JScrollPane(tableTarifs);
-        defilement.setBorder(null);
-        defilement.getViewport().setBackground(CARTE);
-        defilement.setPreferredSize(new Dimension(100,
-                Math.min(340, 38 + modeleTarifs.getRowCount() * 46)));
-        panneau.add(defilement, BorderLayout.CENTER);
-
-        JPanel sud = new JPanel();
-        sud.setOpaque(false);
-        sud.setLayout(new BoxLayout(sud, BoxLayout.Y_AXIS));
-
-        JPanel barre = new JPanel(new BorderLayout(14, 0));
-        barre.setOpaque(true);
-        barre.setBackground(LIGNE_ALTERNEE);
-        barre.setBorder(BorderFactory.createCompoundBorder(
-                new javax.swing.border.MatteBorder(1, 0, 0, 0, BORDURE),
-                BorderFactory.createEmptyBorder(12, 14, 12, 14)));
-        JPanel gauche = new JPanel();
-        gauche.setOpaque(false);
-        gauche.setLayout(new BoxLayout(gauche, BoxLayout.Y_AXIS));
-        gauche.add(libelle("Prix par heure (Ar)"));
-        gauche.add(Box.createVerticalStrut(4));
-        JLabel indication = new JLabel("Sélectionnez un type dans la liste pour modifier son prix.");
-        indication.setFont(police(Font.PLAIN, 11));
-        indication.setForeground(TEXTE_SECONDAIRE);
-        indication.setAlignmentX(Component.LEFT_ALIGNMENT);
-        gauche.add(indication);
-        gauche.setAlignmentY(Component.CENTER_ALIGNMENT);
-        barre.add(gauche, BorderLayout.WEST);
-
-        JPanel droite = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        droite.setOpaque(false);
-        styleChamp(txtPrix);
-        txtPrix.setPreferredSize(new Dimension(140, 36));
-        txtPrix.addActionListener(e -> modifierTarif());
-        droite.add(txtPrix);
-        JButton btn = new BoutonStyle("Modifier", BoutonStyle.Type.PRIMAIRE);
-        btn.addActionListener(e -> modifierTarif());
-        droite.add(btn);
-        barre.add(droite, BorderLayout.EAST);
-        sud.add(barre);
-
-        JPanel note = new JPanel(new BorderLayout(10, 0));
-        note.setOpaque(false);
-        note.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
-        note.add(new JLabel(new Icone(Icone.Type.COCHE, 15, PRIMAIRE)), BorderLayout.WEST);
-        JLabel noteTexte = new JLabel("Ces tarifs sont automatiquement appliqués lors de la "
-                + "validation d'une sortie pour calculer le montant du stationnement "
-                + "en fonction de la durée constatée.");
-        noteTexte.setFont(police(Font.PLAIN, 11));
-        noteTexte.setForeground(TEXTE_SECONDAIRE);
-        note.add(noteTexte, BorderLayout.CENTER);
-        sud.add(note);
-
-        panneau.add(sud, BorderLayout.SOUTH);
-        return panneau;
-    }
-
-    private String listeTypes() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < modeleTarifs.getRowCount(); i++) {
-            if (sb.length() > 0) {
-                sb.append(", ");
-            }
-            sb.append(modeleTarifs.getValueAt(i, 0));
-        }
-        return sb.toString();
-    }
-
-    private void chargerTarifs() {
-        List<Tarif> liste = tarifDAO.lister();
-        modeleTarifs.setRowCount(0);
-        for (Tarif t : liste) {
-            modeleTarifs.addRow(new Object[]{t.getTypeVehicule(), t.getPrixHeure()});
-        }
-    }
-
-    private void modifierTarif() {
-        int ligne = tableTarifs.getSelectedRow();
-        if (ligne < 0) {
-            JOptionPane.showMessageDialog(this, "Selectionnez un tarif dans la table.");
-            return;
-        }
-        String prixTexte = txtPrix.getText().trim();
-        if (prixTexte.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Veuillez saisir un prix.");
-            return;
-        }
-        try {
-            double prix = Double.parseDouble(prixTexte);
-            if (prix < 0) {
-                throw new NumberFormatException();
-            }
-            Tarif t = new Tarif(String.valueOf(modeleTarifs.getValueAt(ligne, 0)), prix);
-            tarifDAO.modifier(t);
-            JOptionPane.showMessageDialog(this, "Tarif modifie avec succes.");
-            chargerTarifs();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Prix invalide. Utilisez un nombre positif.");
-        }
+        return new TarifForm(false);
     }
 
     // ---------------------------------------------------------------------
@@ -1318,13 +1139,6 @@ public class ParametreForm extends JPanel {
             return texte;
         }
         return Character.toUpperCase(texte.charAt(0)) + texte.substring(1);
-    }
-
-    private static String nombre(double v) {
-        if (v == Math.rint(v) && !Double.isInfinite(v)) {
-            return String.valueOf((long) v);
-        }
-        return String.valueOf(v);
     }
 
     private static final boolean UTILISER_SEGOE = contientPolice("Segoe UI");
@@ -1461,17 +1275,6 @@ public class ParametreForm extends JPanel {
         return new Chip(CHIP_FOND, contenu);
     }
 
-    private Chip chipRegime() {
-        JPanel contenu = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        contenu.setOpaque(false);
-        contenu.add(new JLabel(new Icone(Icone.Type.COCHE, 14, VERT)));
-        JLabel lbl = new JLabel("TARIFICATION HORAIRE");
-        lbl.setFont(police(Font.BOLD, 10));
-        lbl.setForeground(VERT);
-        contenu.add(lbl);
-        return new Chip(CHIP_FOND, contenu);
-    }
-
     /** Ancienne pastille de regie, conservee (signature). */
     private JPanel pastilleRegie() {
         JPanel pastille = new JPanel();
@@ -1498,66 +1301,6 @@ public class ParametreForm extends JPanel {
         statut.setAlignmentX(Component.LEFT_ALIGNMENT);
         pastille.add(statut);
         return pastille;
-    }
-
-    /** Carte metrique compacte (modele Tarif_modele). */
-    private JPanel miniStat(String surTitre, String valeur, String sous, Icone.Type icone,
-                            Color fondIcone, Color couleurIcone, String note,
-                            String pill, Color couleurPill) {
-        JPanel pan = new JPanel(new GridBagLayout());
-        pan.setOpaque(true);
-        pan.setBackground(CARTE);
-        pan.setBorder(BorderFactory.createCompoundBorder(
-                new RoundedBorder(BORDURE, 4, 1),
-                BorderFactory.createEmptyBorder(16, 16, 12, 16)));
-        GridBagConstraints g = new GridBagConstraints();
-        g.gridx = 0;
-        g.gridy = 0;
-        g.weightx = 1;
-        g.fill = GridBagConstraints.HORIZONTAL;
-        g.anchor = GridBagConstraints.WEST;
-        JLabel sur = new JLabel(surTitre.toUpperCase(Locale.FRENCH));
-        sur.setFont(police(Font.BOLD, 10));
-        sur.setForeground(TEXTE_SECONDAIRE);
-        pan.add(sur, g);
-        g.gridx = 1;
-        g.weightx = 0;
-        pan.add(new CarreIcone(icone, 36, fondIcone, couleurIcone), g);
-
-        g.gridx = 0;
-        g.gridy = 1;
-        g.gridwidth = 2;
-        g.weightx = 1;
-        g.insets = new Insets(14, 0, 0, 0);
-        JLabel val = new JLabel(valeur);
-        val.setFont(police(Font.BOLD, 22));
-        val.setForeground(TEXTE);
-        pan.add(val, g);
-
-        if (sous != null && !sous.isEmpty()) {
-            g.gridy = 2;
-            g.insets = new Insets(2, 0, 0, 0);
-            JLabel s = new JLabel(sous);
-            s.setFont(police(Font.PLAIN, 11));
-            s.setForeground(TEXTE_SECONDAIRE);
-            pan.add(s, g);
-        }
-
-        JPanel bas = new JPanel(new BorderLayout(8, 0));
-        bas.setOpaque(false);
-        JLabel noteLab = new JLabel(note);
-        noteLab.setFont(police(Font.PLAIN, 10));
-        noteLab.setForeground(TEXTE_SECONDAIRE);
-        bas.add(noteLab, BorderLayout.WEST);
-        JLabel pillLab = new JLabel(pill);
-        pillLab.setFont(police(Font.BOLD, 10));
-        pillLab.setForeground(couleurPill);
-        pillLab.setOpaque(false);
-        bas.add(new Chip(CHIP_FOND, pillLab), BorderLayout.EAST);
-        g.gridy = 3;
-        g.insets = new Insets(14, 0, 0, 0);
-        pan.add(bas, g);
-        return pan;
     }
 
     // ---------------------------------------------------------------------
@@ -2102,47 +1845,4 @@ public class ParametreForm extends JPanel {
         return v;
     }
 
-    private static class EnteteRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel,
-                                                       boolean foc, int r, int c) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(t, v, sel, foc, r, c);
-            label.setOpaque(true);
-            label.setBackground(LIGNE_ALTERNEE);
-            label.setForeground(LABEL);
-            label.setFont(police(Font.BOLD, 11));
-            label.setHorizontalAlignment(c == 1 ? SwingConstants.RIGHT : SwingConstants.LEFT);
-            String texte = label.getText();
-            if (texte != null) {
-                label.setText(texte.toUpperCase(Locale.FRENCH));
-            }
-            label.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, BORDURE),
-                    BorderFactory.createEmptyBorder(6, 14, 6, 14)));
-            return label;
-        }
-    }
-
-    private static class CelluleRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel,
-                                                       boolean foc, int r, int c) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(t, v, sel, foc, r, c);
-            label.setOpaque(true);
-            label.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
-            if (c == 1 && v instanceof Number) {
-                label.setFont(police(Font.BOLD, 13));
-                label.setForeground(VERT);
-                label.setHorizontalAlignment(SwingConstants.RIGHT);
-                label.setText(nombre(((Number) v).doubleValue()) + " Ar/h");
-            } else {
-                label.setFont(police(Font.PLAIN, 13));
-                label.setForeground(TEXTE);
-                label.setHorizontalAlignment(SwingConstants.LEFT);
-                label.setText(String.valueOf(v));
-            }
-            label.setBackground(sel ? SELECTION : (r % 2 == 1 ? LIGNE_ALTERNEE : CARTE));
-            return label;
-        }
-    }
 }

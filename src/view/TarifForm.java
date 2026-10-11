@@ -17,14 +17,18 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.text.DecimalFormat;
 import java.util.List;
+import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonModel;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -33,34 +37,37 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import model.Tarif;
 
 /**
- * Gestion des tarifs : affichage et modification du prix par heure.
- * Seul le design est personnalise : la logique est inchangee.
+ * Gestion des tarifs : liste des categories avec, pour chacune, un bouton
+ * "Modifier" ouvrant une fenetre dediee (reproduction du modele de reference
+ * {@code reference/Tarif_modell/code.html}, adapte au theme clair).
+ * Seule la presentation change : la logique d'acces aux donnees reste inchangee.
  */
 public class TarifForm extends JPanel {
 
-    private final JTextField txtPrix = new JTextField(10);
-
-    private final JButton btnModifier = new BoutonStyle("Modifier", BoutonStyle.Type.PRIMAIRE, false);
-    private final JButton btnActualiser = new BoutonStyle("Actualiser", BoutonStyle.Type.NEUTRE, false);
+    private static final int COL_ACTION = 3;
 
     private final DefaultTableModel modeleTable = new DefaultTableModel(
-            new String[]{"Type de vehicule", "Prix par heure (Ar)"}, 0) {
+            new String[]{"#", "Catégorie de véhicule", "Prix par heure (Ar)", "Action"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
-            return false;
+            // Seule la colonne "Action" (bouton de ligne) accepte l'edition.
+            return column == COL_ACTION;
         }
     };
     private final JTable table = new JTable(modeleTable);
 
-    private final JLabel lblCompteur = new JLabel("0 resultat(s)", SwingConstants.RIGHT);
+    private final JLabel lblCompteur = new JLabel("0 catégorie", SwingConstants.RIGHT);
 
     private final TarifDAO dao = new TarifDAO();
 
@@ -88,30 +95,41 @@ public class TarifForm extends JPanel {
     private static final Color SELECTION          = new Color(0xDBEAFE);
 
     public TarifForm() {
+        this(true);
+    }
+
+    /**
+     * @param afficherEntete false lorsqu'il est integre dans une page hote
+     *                       (ex. onglet "Tarif" de Parametres) qui fournit
+     *                       deja son propre titre.
+     */
+    public TarifForm(boolean afficherEntete) {
         setLayout(new BorderLayout());
         setOpaque(true);
         setBackground(FOND);
-        add(creerFormulaire(), BorderLayout.NORTH);
+        if (afficherEntete) {
+            add(creerEntete(), BorderLayout.NORTH);
+        }
         add(creerTable(), BorderLayout.CENTER);
         actualiser();
     }
 
     // ---------------------------------------------------------------------
-    // FORMULAIRE (en-tete de page + carte de saisie)
+    // EN-TETE DE PAGE
     // ---------------------------------------------------------------------
-    private JPanel creerFormulaire() {
+    private JPanel creerEntete() {
         JPanel enTete = new JPanel();
         enTete.setOpaque(false);
         enTete.setLayout(new BoxLayout(enTete, BoxLayout.Y_AXIS));
 
-        JLabel titrePage = new JLabel("Tarifs");
+        JLabel titrePage = new JLabel("Configuration des tarifs");
         titrePage.setFont(police(Font.BOLD, 20));
         titrePage.setForeground(TEXTE);
         titrePage.setAlignmentX(Component.LEFT_ALIGNMENT);
         enTete.add(titrePage);
 
         JLabel sousTitrePage = new JLabel(
-                "Définir le prix par heure pour chaque type de véhicule.");
+                "Définir le prix par heure pour chaque catégorie de véhicule.");
         sousTitrePage.setFont(police(Font.PLAIN, 12));
         sousTitrePage.setForeground(TEXTE_SECONDAIRE);
         sousTitrePage.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -121,77 +139,7 @@ public class TarifForm extends JPanel {
         zoneEnTete.setOpaque(false);
         zoneEnTete.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
         zoneEnTete.add(enTete, BorderLayout.NORTH);
-
-        JPanel haut = new JPanel(new BorderLayout());
-        haut.setOpaque(false);
-        haut.add(zoneEnTete, BorderLayout.NORTH);
-        haut.add(creerCarteFormulaire(), BorderLayout.CENTER);
-        return haut;
-    }
-
-    /** Carte blanche contenant le champ de prix et les boutons. */
-    private JPanel creerCarteFormulaire() {
-        JPanel carte = new JPanel(new GridBagLayout());
-        carte.setOpaque(true);
-        carte.setBackground(CARTE);
-        carte.setBorder(BorderFactory.createCompoundBorder(
-                new RoundedBorder(BORDURE, 10, 1, new Insets(0, 0, 0, 0)),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
-
-        styleChamp(txtPrix);
-        txtPrix.setPreferredSize(new Dimension(320, 36));
-        txtPrix.setMaximumSize(new Dimension(320, 36));
-
-        GridBagConstraints g = new GridBagConstraints();
-        g.fill = GridBagConstraints.HORIZONTAL;
-        g.anchor = GridBagConstraints.WEST;
-        g.weightx = 1;
-        g.gridx = 0;
-        g.gridwidth = 1;
-
-        // Ligne 0 : libelle.
-        g.gridy = 0;
-        g.insets = new Insets(0, 0, 0, 0);
-        carte.add(libelle("Prix par heure (Ar)"), g);
-
-        // Ligne 1 : champ (pleine largeur de carte, plafonne a 320 px).
-        g.gridy = 1;
-        g.insets = new Insets(8, 0, 0, 0);
-        JPanel zoneChamp = new JPanel();
-        zoneChamp.setOpaque(false);
-        zoneChamp.setLayout(new BoxLayout(zoneChamp, BoxLayout.X_AXIS));
-        zoneChamp.add(txtPrix);
-        zoneChamp.add(Box.createHorizontalGlue());
-        carte.add(zoneChamp, g);
-
-        // Ligne 2 : texte d'aide.
-        g.gridy = 2;
-        g.insets = new Insets(8, 0, 0, 0);
-        JLabel aide = new JLabel(
-                "Sélectionnez un type dans la liste pour modifier son prix.");
-        aide.setFont(police(Font.PLAIN, 12));
-        aide.setForeground(TEXTE_SECONDAIRE);
-        carte.add(aide, g);
-
-        // Ligne 3 : boutons d'action alignes a droite.
-        g.gridy = 3;
-        g.anchor = GridBagConstraints.EAST;
-        g.insets = new Insets(16, 0, 0, 0);
-        carte.add(creerBarreBoutons(), g);
-
-        // Evenements.
-        btnModifier.addActionListener(e -> modifier());
-        btnActualiser.addActionListener(e -> actualiser());
-        txtPrix.addActionListener(e -> modifier());
-        return carte;
-    }
-
-    private JPanel creerBarreBoutons() {
-        JPanel barre = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        barre.setOpaque(false);
-        barre.add(btnActualiser);
-        barre.add(btnModifier);
-        return barre;
+        return zoneEnTete;
     }
 
     // ---------------------------------------------------------------------
@@ -200,7 +148,6 @@ public class TarifForm extends JPanel {
     private JPanel creerTable() {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFillsViewportHeight(true);
-        table.getSelectionModel().addListSelectionListener(e -> remplirPrix());
         styleTable();
 
         JScrollPane defilement = new JScrollPane(table);
@@ -217,7 +164,7 @@ public class TarifForm extends JPanel {
         JPanel enTete = new JPanel(new BorderLayout());
         enTete.setOpaque(false);
 
-        JLabel titre = new JLabel("Tarifs : Moto, Voiture, Camion");
+        JLabel titre = new JLabel("Registre des tarifs applicables");
         titre.setFont(police(Font.BOLD, 14));
         titre.setForeground(TEXTE);
         enTete.add(titre, BorderLayout.WEST);
@@ -232,7 +179,7 @@ public class TarifForm extends JPanel {
     }
 
     private void styleTable() {
-        table.setRowHeight(30);
+        table.setRowHeight(38);
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
         table.setGridColor(BORDURE);
@@ -242,11 +189,20 @@ public class TarifForm extends JPanel {
         table.setFont(police(Font.PLAIN, 13));
         table.setFillsViewportHeight(true);
 
-        table.getColumnModel().getColumn(0).setPreferredWidth(220);
+        TableColumn colId = table.getColumnModel().getColumn(0);
+        colId.setPreferredWidth(60);
+        colId.setMaxWidth(80);
 
-        TableColumn colPrix = table.getColumnModel().getColumn(1);
-        colPrix.setPreferredWidth(180);
-        colPrix.setCellRenderer(new CelluleRenderer(SwingConstants.RIGHT));
+        table.getColumnModel().getColumn(1).setPreferredWidth(280);
+        table.getColumnModel().getColumn(2).setPreferredWidth(220);
+
+        TableColumn colAction = table.getColumnModel().getColumn(COL_ACTION);
+        colAction.setMinWidth(140);
+        colAction.setPreferredWidth(140);
+        colAction.setMaxWidth(140);
+        colAction.setResizable(false);
+        colAction.setCellRenderer(new ActionsRenderer());
+        colAction.setCellEditor(new ActionsEditor());
 
         table.getTableHeader().setReorderingAllowed(false);
         table.getTableHeader().setResizingAllowed(true);
@@ -262,42 +218,31 @@ public class TarifForm extends JPanel {
     private void actualiser() {
         List<Tarif> liste = dao.lister();
         modeleTable.setRowCount(0);
+        int rang = 1;
         for (Tarif t : liste) {
-            modeleTable.addRow(new Object[]{t.getTypeVehicule(), t.getPrixHeure()});
+            modeleTable.addRow(new Object[]{rang++, t.getTypeVehicule(), t.getPrixHeure(), ""});
         }
-        lblCompteur.setText(liste.size() + " resultat(s)");
+        lblCompteur.setText(liste.size() + (liste.size() > 1 ? " catégories" : " catégorie"));
     }
 
-    private void modifier() {
-        int ligne = table.getSelectedRow();
-        if (ligne < 0) {
-            JOptionPane.showMessageDialog(this, "Selectionnez un tarif dans la table.");
+    /** Ouvre la fenetre de modification du tarif de la ligne indiquee. */
+    private void ouvrirModification(int ligne) {
+        if (ligne < 0 || ligne >= table.getRowCount()) {
             return;
         }
-        String prixTexte = txtPrix.getText().trim();
-        if (prixTexte.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Veuillez saisir un prix.");
-            return;
-        }
+        String type = String.valueOf(modeleTable.getValueAt(ligne, 1));
+        Object valeur = modeleTable.getValueAt(ligne, 2);
+        double prixActuel = valeur instanceof Number ? ((Number) valeur).doubleValue() : 0;
 
-        try {
-            double prix = Double.parseDouble(prixTexte);
-            if (prix < 0) {
-                throw new NumberFormatException();
-            }
-            Tarif t = new Tarif(String.valueOf(modeleTable.getValueAt(ligne, 0)), prix);
-            dao.modifier(t);
-            JOptionPane.showMessageDialog(this, "Tarif modifie avec succes.");
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        FenetreTarif fenetre = new FenetreTarif(parent, type, prixActuel);
+        fenetre.setLocationRelativeTo(this);
+        fenetre.setVisible(true);
+
+        if (fenetre.estValide()) {
+            dao.modifier(new Tarif(type, fenetre.getPrix()));
             actualiser();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Prix invalide. Utilisez un nombre positif.");
-        }
-    }
-
-    private void remplirPrix() {
-        int ligne = table.getSelectedRow();
-        if (ligne >= 0) {
-            txtPrix.setText(String.valueOf(modeleTable.getValueAt(ligne, 1)));
+            JOptionPane.showMessageDialog(this, "Tarif modifié avec succès.");
         }
     }
 
@@ -327,14 +272,17 @@ public class TarifForm extends JPanel {
         return label;
     }
 
-    private void styleChamp(JTextField champ) {
+    private static String formatPrix(double valeur) {
+        DecimalFormat df = new DecimalFormat("###,##0");
+        return df.format(valeur).replace(',', ' ').replace('\u00A0', ' ');
+    }
+
+    private static void styleChamp(JTextField champ) {
         champ.setOpaque(true);
         champ.setBackground(CARTE);
         champ.setForeground(TEXTE);
         champ.setCaretColor(PRIMAIRE);
         champ.setFont(police(Font.PLAIN, 13));
-        champ.setPreferredSize(new Dimension(120, 36));
-        champ.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         champ.setBorder(bordureChamp(1, BORDURE_CHAMP));
 
         champ.addFocusListener(new FocusAdapter() {
@@ -355,6 +303,137 @@ public class TarifForm extends JPanel {
         return BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(couleur, epaisseur),
                 BorderFactory.createEmptyBorder(p, 10, p, 10));
+    }
+
+    // ---------------------------------------------------------------------
+    // FENETRE DE MODIFICATION
+    // ---------------------------------------------------------------------
+    private static class FenetreTarif extends JDialog {
+
+        private final JTextField champPrix = new JTextField();
+        private final BoutonStyle btnAnnuler = new BoutonStyle("Annuler", BoutonStyle.Type.NEUTRE, false);
+        private final BoutonStyle btnEnregistrer = new BoutonStyle("Enregistrer", BoutonStyle.Type.PRIMAIRE, false);
+
+        private boolean valide;
+        private double prix;
+
+        FenetreTarif(Window parent, String type, double prixActuel) {
+            super(parent, "Modifier le tarif", ModalityType.APPLICATION_MODAL);
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setResizable(false);
+
+            JPanel carte = new JPanel(new GridBagLayout());
+            carte.setBackground(CARTE);
+            carte.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            GridBagConstraints g = new GridBagConstraints();
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.anchor = GridBagConstraints.WEST;
+            g.weightx = 1;
+            g.gridx = 0;
+            g.gridwidth = 1;
+
+            // Titre.
+            g.gridy = 0;
+            g.insets = new Insets(0, 0, 16, 0);
+            JLabel titre = new JLabel("Modifier le tarif");
+            titre.setFont(police(Font.BOLD, 16));
+            titre.setForeground(TEXTE);
+            carte.add(titre, g);
+
+            // Type de vehicule (lecture seule).
+            g.gridy = 1;
+            g.insets = new Insets(0, 0, 0, 0);
+            carte.add(libelle("Type de véhicule"), g);
+
+            g.gridy = 2;
+            g.insets = new Insets(6, 0, 0, 0);
+            JLabel valeurType = new JLabel(type);
+            valeurType.setFont(police(Font.BOLD, 14));
+            valeurType.setForeground(TEXTE);
+            JPanel zoneType = new JPanel(new BorderLayout());
+            zoneType.setOpaque(true);
+            zoneType.setBackground(FOND);
+            zoneType.setBorder(BorderFactory.createCompoundBorder(
+                    new RoundedBorder(BORDURE_CHAMP, 6, 1, new Insets(0, 0, 0, 0)),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+            zoneType.add(valeurType, BorderLayout.WEST);
+            carte.add(zoneType, g);
+
+            // Prix par heure.
+            g.gridy = 3;
+            g.insets = new Insets(16, 0, 0, 0);
+            carte.add(libelle("Prix par heure (Ar)"), g);
+
+            g.gridy = 4;
+            g.insets = new Insets(6, 0, 0, 0);
+            champPrix.setText(formatPrix(prixActuel));
+            styleChamp(champPrix);
+            champPrix.setPreferredSize(new Dimension(220, 36));
+            JLabel suffixe = new JLabel("Ar / h");
+            suffixe.setFont(police(Font.BOLD, 13));
+            suffixe.setForeground(TEXTE_SECONDAIRE);
+            suffixe.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+            JPanel zonePrix = new JPanel();
+            zonePrix.setOpaque(false);
+            zonePrix.setLayout(new BoxLayout(zonePrix, BoxLayout.X_AXIS));
+            zonePrix.add(champPrix);
+            zonePrix.add(suffixe);
+            zonePrix.add(Box.createHorizontalGlue());
+            carte.add(zonePrix, g);
+
+            // Aide.
+            g.gridy = 5;
+            g.insets = new Insets(16, 0, 0, 0);
+            JLabel info = new JLabel(
+                    "<html><body style='width:300px'>Le nouveau prix s'appliquera immédiatement "
+                    + "au calcul du montant du stationnement.</body></html>");
+            info.setFont(police(Font.PLAIN, 12));
+            info.setForeground(TEXTE_SECONDAIRE);
+            carte.add(info, g);
+
+            // Boutons.
+            g.gridy = 6;
+            g.anchor = GridBagConstraints.EAST;
+            g.fill = GridBagConstraints.NONE;
+            g.insets = new Insets(20, 0, 0, 0);
+            JPanel barre = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            barre.setOpaque(false);
+            barre.add(btnAnnuler);
+            barre.add(btnEnregistrer);
+            carte.add(barre, g);
+
+            btnAnnuler.addActionListener(e -> dispose());
+            btnEnregistrer.addActionListener(e -> enregistrer());
+            champPrix.addActionListener(e -> enregistrer());
+
+            setContentPane(carte);
+            pack();
+        }
+
+        private void enregistrer() {
+            String texte = champPrix.getText().trim().replace(" ", "").replace("\u00A0", "");
+            try {
+                double valeur = Double.parseDouble(texte);
+                if (valeur < 0) {
+                    throw new NumberFormatException();
+                }
+                prix = valeur;
+                valide = true;
+                dispose();
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Prix invalide. Utilisez un nombre positif.");
+            }
+        }
+
+        boolean estValide() {
+            return valide;
+        }
+
+        double getPrix() {
+            return prix;
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -502,7 +581,8 @@ public class TarifForm extends JPanel {
             label.setBackground(ENTETE_TABLE);
             label.setForeground(LABEL);
             label.setFont(police(Font.BOLD, 13));
-            label.setHorizontalAlignment(SwingConstants.LEFT);
+            label.setHorizontalAlignment(c == COL_ACTION ? SwingConstants.RIGHT
+                    : (c == 0 ? SwingConstants.CENTER : SwingConstants.LEFT));
             label.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 1, 0, BORDURE),
                     BorderFactory.createEmptyBorder(4, 12, 4, 8)));
@@ -511,27 +591,36 @@ public class TarifForm extends JPanel {
     }
 
     private static class CelluleRenderer extends DefaultTableCellRenderer {
-
-        private final int alignement;
-
-        CelluleRenderer() {
-            this(SwingConstants.LEFT);
-        }
-
-        CelluleRenderer(int alignement) {
-            this.alignement = alignement;
-        }
-
         @Override
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel,
                 boolean foc, int r, int c) {
             JLabel label = (JLabel) super.getTableCellRendererComponent(t, v, sel, foc, r, c);
             label.setOpaque(true);
-            label.setFont(police(Font.PLAIN, 13));
-            label.setHorizontalAlignment(alignement);
-            label.setBorder(BorderFactory.createEmptyBorder(4, 12, 4, 8));
-            label.setBackground(fondLigne(sel, r));
+            label.setBorder(BorderFactory.createEmptyBorder(4, 12, 4, 12));
+            label.setBackground(sel ? SELECTION : fondLigne(sel, r));
             label.setForeground(TEXTE);
+            switch (c) {
+                case 0:
+                    label.setFont(police(Font.BOLD, 12));
+                    label.setForeground(sel ? TEXTE : TEXTE_SECONDAIRE);
+                    label.setHorizontalAlignment(SwingConstants.CENTER);
+                    break;
+                case 1:
+                    label.setFont(police(Font.BOLD, 13));
+                    label.setHorizontalAlignment(SwingConstants.LEFT);
+                    break;
+                case 2:
+                    label.setFont(police(Font.PLAIN, 13));
+                    label.setHorizontalAlignment(SwingConstants.RIGHT);
+                    if (v instanceof Number) {
+                        label.setText(formatPrix(((Number) v).doubleValue()));
+                    }
+                    break;
+                default:
+                    label.setFont(police(Font.PLAIN, 13));
+                    label.setHorizontalAlignment(SwingConstants.LEFT);
+                    break;
+            }
             return label;
         }
     }
@@ -541,5 +630,59 @@ public class TarifForm extends JPanel {
             return SELECTION;
         }
         return ligne % 2 == 1 ? LIGNE_ALTERNEE : CARTE;
+    }
+
+    /** Renderer de la colonne "Action" : bouton "Modifier" par ligne. */
+    private static class ActionsRenderer implements TableCellRenderer {
+
+        private final BoutonStyle bouton = new BoutonStyle("Modifier", BoutonStyle.Type.NEUTRE, true);
+
+        ActionsRenderer() {
+            bouton.setFocusable(false);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean sel,
+                boolean foc, int r, int c) {
+            JPanel panneau = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+            panneau.setOpaque(true);
+            panneau.setBackground(fondLigne(sel, r));
+            panneau.add(bouton);
+            return panneau;
+        }
+    }
+
+    /** Editeur de la colonne "Action" : bouton actif ouvrant la fenetre. */
+    private class ActionsEditor extends AbstractCellEditor implements TableCellEditor {
+
+        private final BoutonStyle bouton = new BoutonStyle("Modifier", BoutonStyle.Type.PRIMAIRE, true);
+        private final JPanel panneau = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        private int ligne;
+
+        ActionsEditor() {
+            bouton.setFocusable(false);
+            panneau.setOpaque(true);
+            panneau.add(bouton);
+            bouton.addActionListener(e -> declencher());
+        }
+
+        private void declencher() {
+            final int l = ligne;
+            fireEditingStopped();
+            SwingUtilities.invokeLater(() -> ouvrirModification(l));
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable t, Object v, boolean sel,
+                int r, int c) {
+            ligne = r;
+            panneau.setBackground(fondLigne(true, r));
+            return panneau;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
     }
 }

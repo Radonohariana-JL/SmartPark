@@ -62,7 +62,6 @@ public class Dashboard extends JFrame {
     private final EntreeForm panelEntree;
     private final SortieForm panelSortie;
     private final HistoriqueForm panelHistorique;
-    private final TarifForm panelTarif;
     private final StatistiqueForm panelStatistique;
     private final ParametreForm panelParametre;
 
@@ -147,7 +146,6 @@ public class Dashboard extends JFrame {
         panelEntree = new EntreeForm();
         panelSortie = new SortieForm();
         panelHistorique = new HistoriqueForm();
-        panelTarif = new TarifForm();
         panelStatistique = new StatistiqueForm();
         panelParametre = new ParametreForm(utilisateur);
 
@@ -281,7 +279,6 @@ public class Dashboard extends JFrame {
         nav.add(sousMenuStationnement);
 
         ajouterBouton(nav, "Historique", Icone.Type.HISTORIQUE, "historique");
-        ajouterBouton(nav, "Tarifs", Icone.Type.TARIF, "tarif");
         ajouterBouton(nav, "Parametres", Icone.Type.PARAMETRE, "parametre");
 
         menu.add(nav);
@@ -405,12 +402,33 @@ public class Dashboard extends JFrame {
         content.add(envelopper(panelEntree), "entree");
         content.add(envelopper(panelSortie), "sortie");
         content.add(envelopper(panelHistorique), "historique");
-        content.add(envelopper(panelTarif), "tarif");
         content.add(envelopper(panelParametre), "parametre");
         // Module Statistique conserve (alimente via DAO) mais non navigable.
         content.add(panelStatistique, "statistiques");
 
-        add(content, BorderLayout.CENTER);
+        // En-tete global et fixe : createur une seule fois, partage par toutes
+        // les pages. Seul le contenu central (CardLayout) change a la navigation.
+        JPanel centre = new JPanel(new BorderLayout());
+        centre.setOpaque(true);
+        centre.setBackground(FOND);
+        centre.add(creerBandeauGlobal(), BorderLayout.NORTH);
+        centre.add(content, BorderLayout.CENTER);
+
+        add(centre, BorderLayout.CENTER);
+    }
+
+    /**
+     * En-tete global de l'application (date, notifications, profil utilisateur).
+     * Construit une seule fois et place en haut de la zone de contenu, a droite
+     * de la barre laterale. Il reste donc fixe lors de la navigation.
+     */
+    private JPanel creerBandeauGlobal() {
+        JPanel conteneur = new JPanel(new BorderLayout());
+        conteneur.setOpaque(true);
+        conteneur.setBackground(FOND);
+        conteneur.setBorder(BorderFactory.createEmptyBorder(24, 24, 12, 24));
+        conteneur.add(creerEnteteAccueil(), BorderLayout.CENTER);
+        return conteneur;
     }
 
     /** Ajoute une marge interieure autour d'un panneau module. */
@@ -432,12 +450,10 @@ public class Dashboard extends JFrame {
         accueil.setBackground(FOND);
         accueil.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
 
-        // Bandeau de contexte + cartes KPI.
+        // Cartes KPI (le bandeau date/notifications/profil est desormais global).
         JPanel nord = new JPanel();
         nord.setOpaque(false);
         nord.setLayout(new BoxLayout(nord, BoxLayout.Y_AXIS));
-        nord.add(creerEnteteAccueil());
-        nord.add(Box.createVerticalStrut(24));
         nord.add(creerCartesKpi());
         accueil.add(nord, BorderLayout.NORTH);
 
@@ -469,7 +485,6 @@ public class Dashboard extends JFrame {
     private JPanel creerEnteteAccueil() {
         JPanel bandeau = new JPanel(new BorderLayout());
         bandeau.setOpaque(false);
-        bandeau.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         bandeau.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
         bandeau.setAlignmentX(Component.LEFT_ALIGNMENT);
 
