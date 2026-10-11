@@ -23,66 +23,111 @@ public class ProprietaireDAO {
                 + "WHERE nom ILIKE ? OR prenom ILIKE ? OR telephone ILIKE ? "
                 + "ORDER BY id_proprietaire";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return liste;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                String motCle = "%" + mot + "%";
+                ps.setString(1, motCle);
+                ps.setString(2, motCle);
+                ps.setString(3, motCle);
 
-            String motCle = "%" + mot + "%";
-            ps.setString(1, motCle);
-            ps.setString(2, motCle);
-            ps.setString(3, motCle);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Proprietaire p = new Proprietaire();
-                    p.setIdProprietaire(rs.getInt("id_proprietaire"));
-                    p.setNom(rs.getString("nom"));
-                    p.setPrenom(rs.getString("prenom"));
-                    p.setTelephone(rs.getString("telephone"));
-                    liste.add(p);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Proprietaire p = new Proprietaire();
+                        p.setIdProprietaire(rs.getInt("id_proprietaire"));
+                        p.setNom(rs.getString("nom"));
+                        p.setPrenom(rs.getString("prenom"));
+                        p.setTelephone(rs.getString("telephone"));
+                        liste.add(p);
+                    }
                 }
             }
         } catch (Exception e) {
-            System.out.println("Erreur ProprietaireDAO.lister : " + e.getMessage());
+            System.err.println("Erreur ProprietaireDAO.rechercher : " + e.getMessage());
         }
         return liste;
     }
 
-    public void ajouter(Proprietaire p) {
+    /** Vrai si l'insertion a cree exactement une ligne. */
+    public boolean ajouter(Proprietaire p) {
         String sql = "INSERT INTO proprietaire (nom, prenom, telephone) VALUES (?, ?, ?)";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, p.getNom());
-            ps.setString(2, p.getPrenom());
-            ps.setString(3, p.getTelephone());
-            ps.executeUpdate();
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return false;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, p.getNom());
+                ps.setString(2, p.getPrenom());
+                ps.setString(3, p.getTelephone());
+                return ps.executeUpdate() == 1;
+            }
         } catch (Exception e) {
-            System.out.println("Erreur ProprietaireDAO.ajouter : " + e.getMessage());
+            System.err.println("Erreur ProprietaireDAO.ajouter : " + e.getMessage());
+            return false;
         }
     }
 
-    public void modifier(Proprietaire p) {
+    /** Vrai si la modification a touche exactement une ligne. */
+    public boolean modifier(Proprietaire p) {
         String sql = "UPDATE proprietaire SET nom = ?, prenom = ?, telephone = ? "
                 + "WHERE id_proprietaire = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, p.getNom());
-            ps.setString(2, p.getPrenom());
-            ps.setString(3, p.getTelephone());
-            ps.setInt(4, p.getIdProprietaire());
-            ps.executeUpdate();
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return false;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, p.getNom());
+                ps.setString(2, p.getPrenom());
+                ps.setString(3, p.getTelephone());
+                ps.setInt(4, p.getIdProprietaire());
+                return ps.executeUpdate() == 1;
+            }
         } catch (Exception e) {
-            System.out.println("Erreur ProprietaireDAO.modifier : " + e.getMessage());
+            System.err.println("Erreur ProprietaireDAO.modifier : " + e.getMessage());
+            return false;
         }
     }
 
-    public void supprimer(int id) {
+    /** Vrai si la suppression a supprime exactement une ligne. */
+    public boolean supprimer(int id) {
         String sql = "DELETE FROM proprietaire WHERE id_proprietaire = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return false;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                return ps.executeUpdate() == 1;
+            }
         } catch (Exception e) {
-            System.out.println("Erreur ProprietaireDAO.supprimer : " + e.getMessage());
+            System.err.println("Erreur ProprietaireDAO.supprimer : " + e.getMessage());
+            return false;
         }
+    }
+
+    /**
+     * Nombre de vehicules rattaches a un proprietaire. Permet aux vues de
+     * refuser la suppression tant que des relations existent en base.
+     */
+    public int compterVehicules(int idProprietaire) {
+        String sql = "SELECT COUNT(*) FROM vehicule WHERE id_proprietaire = ?";
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return -1;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idProprietaire);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur ProprietaireDAO.compterVehicules : " + e.getMessage());
+        }
+        return -1;
     }
 }

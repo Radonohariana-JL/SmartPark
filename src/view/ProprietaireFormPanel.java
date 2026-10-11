@@ -664,11 +664,15 @@ public class ProprietaireFormPanel extends JPanel {
                 txtNom.getText().trim(),
                 txtPrenom.getText().trim(),
                 txtTelephone.getText().trim());
-        dao.ajouter(p);
-        JOptionPane.showMessageDialog(this, "Proprietaire ajoute avec succes.");
-        viderChamps();
-        actualiser();
-        fermerCarte();
+        if (dao.ajouter(p)) {
+            JOptionPane.showMessageDialog(this, "Proprietaire ajoute avec succes.");
+            viderChamps();
+            actualiser();
+            fermerCarte();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors de l'ajout du proprietaire (base indisponible ou donnees invalides).");
+        }
     }
 
     private void modifier() {
@@ -685,9 +689,13 @@ public class ProprietaireFormPanel extends JPanel {
                 txtPrenom.getText().trim(),
                 txtTelephone.getText().trim());
         p.setIdProprietaire((int) modeleTable.getValueAt(ligne, 0));
-        dao.modifier(p);
-        JOptionPane.showMessageDialog(this, "Proprietaire modifie avec succes.");
-        actualiser();
+        if (dao.modifier(p)) {
+            JOptionPane.showMessageDialog(this, "Proprietaire modifie avec succes.");
+            actualiser();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors de la modification du proprietaire.");
+        }
     }
 
     private void supprimer() {
@@ -697,13 +705,23 @@ public class ProprietaireFormPanel extends JPanel {
             return;
         }
         int id = (int) modeleTable.getValueAt(ligne, 0);
+        int vehicules = dao.compterVehicules(id);
+        if (vehicules > 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Suppression impossible : ce proprietaire possede des vehicules.");
+            return;
+        }
         int choix = JOptionPane.showConfirmDialog(this,
                 "Voulez-vous vraiment supprimer ce proprietaire ?",
                 "Confirmation", JOptionPane.YES_NO_OPTION);
         if (choix == JOptionPane.YES_OPTION) {
-            dao.supprimer(id);
-            viderChamps();
-            actualiser();
+            if (dao.supprimer(id)) {
+                viderChamps();
+                actualiser();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Erreur lors de la suppression du proprietaire.");
+            }
         }
     }
 

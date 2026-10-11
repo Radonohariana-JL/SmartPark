@@ -380,16 +380,26 @@ public class VehiculeForm extends JPanel {
         if (!champsValides()) {
             return;
         }
+        String immatriculation = txtImmatriculation.getText().trim().toUpperCase();
+        if (dao.estImmatriculationUtilisee(immatriculation, null)) {
+            JOptionPane.showMessageDialog(this,
+                    "Cette immatriculation existe deja dans la base.");
+            return;
+        }
         Vehicule v = new Vehicule(
-                txtImmatriculation.getText().trim().toUpperCase(),
+                immatriculation,
                 txtMarque.getText().trim(),
                 txtCouleur.getText().trim(),
                 (String) comboType.getSelectedItem(),
                 ((Proprietaire) comboProprietaire.getSelectedItem()).getIdProprietaire());
-        dao.ajouter(v);
-        JOptionPane.showMessageDialog(this, "Vehicule ajoute avec succes.");
-        viderChamps();
-        actualiser();
+        if (dao.ajouter(v)) {
+            JOptionPane.showMessageDialog(this, "Vehicule ajoute avec succes.");
+            viderChamps();
+            actualiser();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors de l'ajout du vehicule (base indisponible ou donnees invalides).");
+        }
     }
 
     private void modifier() {
@@ -401,16 +411,27 @@ public class VehiculeForm extends JPanel {
         if (!champsValides()) {
             return;
         }
+        int id = (int) modeleTable.getValueAt(ligne, 0);
+        String immatriculation = txtImmatriculation.getText().trim().toUpperCase();
+        if (dao.estImmatriculationUtilisee(immatriculation, id)) {
+            JOptionPane.showMessageDialog(this,
+                    "Cette immatriculation est deja utilisee par un autre vehicule.");
+            return;
+        }
         Vehicule v = new Vehicule(
-                txtImmatriculation.getText().trim().toUpperCase(),
+                immatriculation,
                 txtMarque.getText().trim(),
                 txtCouleur.getText().trim(),
                 (String) comboType.getSelectedItem(),
                 ((Proprietaire) comboProprietaire.getSelectedItem()).getIdProprietaire());
-        v.setIdVehicule((int) modeleTable.getValueAt(ligne, 0));
-        dao.modifier(v);
-        JOptionPane.showMessageDialog(this, "Vehicule modifie avec succes.");
-        actualiser();
+        v.setIdVehicule(id);
+        if (dao.modifier(v)) {
+            JOptionPane.showMessageDialog(this, "Vehicule modifie avec succes.");
+            actualiser();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors de la modification du vehicule (base indisponible ou donnees invalides).");
+        }
     }
 
     private void supprimer() {
@@ -420,13 +441,23 @@ public class VehiculeForm extends JPanel {
             return;
         }
         int id = (int) modeleTable.getValueAt(ligne, 0);
+        int stationnements = dao.compterStationnements(id);
+        if (stationnements > 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Suppression impossible : ce vehicule possede des historiques de stationnement.");
+            return;
+        }
         int choix = JOptionPane.showConfirmDialog(this,
                 "Voulez-vous vraiment supprimer ce vehicule ?",
                 "Confirmation", JOptionPane.YES_NO_OPTION);
         if (choix == JOptionPane.YES_OPTION) {
-            dao.supprimer(id);
-            viderChamps();
-            actualiser();
+            if (dao.supprimer(id)) {
+                viderChamps();
+                actualiser();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Erreur lors de la suppression du vehicule.");
+            }
         }
     }
 

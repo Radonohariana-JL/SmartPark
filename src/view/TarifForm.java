@@ -240,9 +240,14 @@ public class TarifForm extends JPanel {
         fenetre.setVisible(true);
 
         if (fenetre.estValide()) {
-            dao.modifier(new Tarif(type, fenetre.getPrix()));
+            boolean ok = dao.modifier(new Tarif(type, fenetre.getPrix()));
             actualiser();
-            JOptionPane.showMessageDialog(this, "Tarif modifié avec succès.");
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Tarif modifié avec succès.");
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Erreur lors de la modification du tarif (base indisponible).");
+            }
         }
     }
 

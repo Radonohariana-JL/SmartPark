@@ -69,8 +69,11 @@ CREATE TABLE IF NOT EXISTS stationnement (
 -- ------------------------------------------------------------
 
 -- Utilisateur administrateur de test
+-- Le mot de passe est stocke en hachage SHA-256 hexadecimal (mot de passe
+-- initial : 'admin123').
 INSERT INTO utilisateur (nom, email, mot_de_passe, role)
-VALUES ('Administrateur', 'admin@smartpark.com', 'admin123', 'ADMIN')
+VALUES ('Administrateur', 'admin@smartpark.com',
+        '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'ADMIN')
 ON CONFLICT (email) DO NOTHING;
 
 -- Tarifs

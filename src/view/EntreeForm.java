@@ -1,6 +1,7 @@
 package view;
 
 import dao.PlaceDAO;
+import dao.ResultatOperation;
 import dao.StationnementDAO;
 import dao.VehiculeDAO;
 import java.awt.BasicStroke;
@@ -734,15 +735,16 @@ public class EntreeForm extends JPanel {
         Vehicule vehicule = (Vehicule) comboVehicule.getSelectedItem();
         Place place = (Place) comboPlace.getSelectedItem();
 
-        boolean ok = stationnementDAO.creerEntree(vehicule.getIdVehicule(), place.getIdPlace());
+        ResultatOperation res
+                = stationnementDAO.creerEntree(vehicule.getIdVehicule(), place.getIdPlace());
 
-        if (ok) {
+        if (res.estSucces()) {
             JOptionPane.showMessageDialog(this,
                     "Entree enregistree : " + vehicule.getImmatriculation()
                     + " en place " + place.getNumeroPlace() + ".");
             actualiser();
         } else {
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de l'entree.");
+            JOptionPane.showMessageDialog(this, res.getMessage());
         }
     }
 

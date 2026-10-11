@@ -1,5 +1,6 @@
 package view;
 
+import dao.ResultatOperation;
 import dao.StationnementDAO;
 import dao.TarifDAO;
 import dao.VehiculeDAO;
@@ -986,15 +987,15 @@ public class SortieForm extends JPanel {
         }
 
         double prix = tarifDAO.getPrixHeure(s.getTypeVehicule());
-        boolean ok = stationnementDAO.terminer(s, prix);
+        ResultatOperation res = stationnementDAO.terminer(s, prix);
 
-        if (ok) {
+        if (res.estSucces()) {
             JOptionPane.showMessageDialog(this,
                     "Sortie enregistree : " + s.getImmatriculation()
-                            + " - montant " + s.getMontant() + " Ar.");
+                            + " - montant " + res.getMontant() + " Ar.");
             actualiser();
         } else {
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de la sortie.");
+            JOptionPane.showMessageDialog(this, res.getMessage());
         }
     }
 

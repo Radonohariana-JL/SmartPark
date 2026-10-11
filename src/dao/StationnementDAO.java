@@ -14,6 +14,7 @@ import util.DBConnection;
 /**
  * Acces aux donnees de la table STATIONNEMENT.
  * Contient aussi la logique metier : entree, sortie, historique et statistiques.
+ * Les operations de modification sont atomiques (transaction + rollback).
  */
 public class StationnementDAO {
 
@@ -31,77 +32,182 @@ public class StationnementDAO {
     // ---------------------------------------------------------------
     // ENTREE : creation d'un stationnement
     // ---------------------------------------------------------------
-    public boolean creerEntree(int idVehicule, int idPlace) {
+    /**
+     * Enregistre une entree de maniere atomique.
+     * Refuse si le vehicule est deja gare (EN_COURS) ou si la place n'est
+     * pas LIBRE au moment de la validation (SELECT ... FOR UPDATE).
+     */
+    public ResultatOperation creerEntree(int idVehicule, int idPlace) {
+        String sqlVerifVehicule = "SELECT 1 FROM stationnement "
+                + "WHERE id_vehicule = ? AND statut = 'EN_COURS'";
+        String sqlVerifPlace = "SELECT etat FROM place WHERE id_place = ? FOR UPDATE";
         String sql = "INSERT INTO stationnement (date_entree, statut, id_vehicule, id_place) "
                 + "VALUES (?, 'EN_COURS', ?, ?)";
         String sqlPlace = "UPDATE place SET etat = 'OCCUPEE' WHERE id_place = ?";
 
-        try (Connection con = DBConnection.getConnection()) {
+        Connection con = DBConnection.getConnection();
+        try {
+            if (con == null) {
+                return ResultatOperation.echec("Base de donnees indisponible.");
+            }
             con.setAutoCommit(false);
+
+            try (PreparedStatement ps = con.prepareStatement(sqlVerifVehicule)) {
+                ps.setInt(1, idVehicule);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        con.rollback();
+                        return ResultatOperation.echec(
+                                "Ce vehicule possede deja un stationnement en cours.");
+                    }
+                }
+            }
+
+            String etatPlace;
+            try (PreparedStatement ps = con.prepareStatement(sqlVerifPlace)) {
+                ps.setInt(1, idPlace);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        return ResultatOperation.echec("Place introuvable.");
+                    }
+                    etatPlace = rs.getString("etat");
+                }
+            }
+            if (!"LIBRE".equals(etatPlace)) {
+                con.rollback();
+                return ResultatOperation.echec("Cette place est deja occupee.");
+            }
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
                 ps.setInt(2, idVehicule);
                 ps.setInt(3, idPlace);
-                ps.executeUpdate();
+                if (ps.executeUpdate() != 1) {
+                    con.rollback();
+                    return ResultatOperation.echec("Echec de l'enregistrement de l'entree.");
+                }
             }
 
             try (PreparedStatement ps = con.prepareStatement(sqlPlace)) {
                 ps.setInt(1, idPlace);
-                ps.executeUpdate();
+                if (ps.executeUpdate() != 1) {
+                    con.rollback();
+                    return ResultatOperation.echec("Echec de la mise a jour de la place.");
+                }
             }
 
             con.commit();
-            return true;
-
+            return ResultatOperation.succes("Entree enregistree.");
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.creerEntree : " + e.getMessage());
-            return false;
+            annuler(con, "creerEntree", e);
+            return ResultatOperation.echec("Erreur lors de l'enregistrement de l'entree.");
+        } finally {
+            fermer(con);
         }
     }
 
     // ---------------------------------------------------------------
     // SORTIE : fin d'un stationnement
     // ---------------------------------------------------------------
-    public boolean terminer(Stationnement s, double prixHeure) {
-        LocalDateTime maintenant = LocalDateTime.now();
-
-        // Duree en heures, arrondie a 2 decimales (minimum 1 heure).
-        double duree = ChronoUnit.MINUTES.between(s.getDateEntree(), maintenant) / 60.0;
-        if (duree < 1) {
-            duree = 1;
+    /**
+     * Cloture un stationnement de maniere atomique.
+     * Refuse une double sortie (statut deja TERMINE) et un tarif manquant.
+     * Calcule la duree et le montant dans la transaction a partir de la base.
+     */
+    public ResultatOperation terminer(Stationnement s, double prixHeure) {
+        if (prixHeure <= 0) {
+            return ResultatOperation.echec(
+                    "Aucun tarif defini pour ce type de vehicule : cloture impossible.");
         }
-        duree = Math.round(duree * 100.0) / 100.0;
 
-        // Montant = nombre d'heures * prix de l'heure.
-        double montant = Math.round(duree * prixHeure * 100.0) / 100.0;
-
+        String sqlLect = "SELECT date_entree, id_place, statut "
+                + "FROM stationnement WHERE id_stationnement = ? FOR UPDATE";
         String sql = "UPDATE stationnement SET date_sortie = ?, duree = ?, montant = ?, "
-                + "statut = 'TERMINE' WHERE id_stationnement = ?";
+                + "statut = 'TERMINE' WHERE id_stationnement = ? AND statut = 'EN_COURS'";
         String sqlPlace = "UPDATE place SET etat = 'LIBRE' WHERE id_place = ?";
 
-        try (Connection con = DBConnection.getConnection()) {
+        Connection con = DBConnection.getConnection();
+        try {
+            if (con == null) {
+                return ResultatOperation.echec("Base de donnees indisponible.");
+            }
             con.setAutoCommit(false);
+
+            LocalDateTime dateEntree;
+            int idPlace;
+            try (PreparedStatement ps = con.prepareStatement(sqlLect)) {
+                ps.setInt(1, s.getIdStationnement());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        return ResultatOperation.echec("Stationnement introuvable.");
+                    }
+                    Timestamp ts = rs.getTimestamp("date_entree");
+                    dateEntree = ts == null ? LocalDateTime.now() : ts.toLocalDateTime();
+                    idPlace = rs.getInt("id_place");
+                    if (!"EN_COURS".equals(rs.getString("statut"))) {
+                        con.rollback();
+                        return ResultatOperation.echec(
+                                "La sortie a deja ete enregistree pour ce stationnement.");
+                    }
+                }
+            }
+
+            LocalDateTime maintenant = LocalDateTime.now();
+            double duree = ChronoUnit.MINUTES.between(dateEntree, maintenant) / 60.0;
+            if (duree < 1) {
+                duree = 1;
+            }
+            duree = Math.round(duree * 100.0) / 100.0;
+            double montant = Math.round(duree * prixHeure * 100.0) / 100.0;
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setTimestamp(1, Timestamp.valueOf(maintenant));
                 ps.setDouble(2, duree);
                 ps.setDouble(3, montant);
                 ps.setInt(4, s.getIdStationnement());
-                ps.executeUpdate();
+                if (ps.executeUpdate() != 1) {
+                    con.rollback();
+                    return ResultatOperation.echec("Echec de la cloture du stationnement.");
+                }
             }
 
             try (PreparedStatement ps = con.prepareStatement(sqlPlace)) {
-                ps.setInt(1, s.getIdPlace());
-                ps.executeUpdate();
+                ps.setInt(1, idPlace);
+                if (ps.executeUpdate() != 1) {
+                    con.rollback();
+                    return ResultatOperation.echec("Echec de la liberation de la place.");
+                }
             }
 
             con.commit();
-            return true;
-
+            return ResultatOperation.succes("Sortie enregistree.", duree, montant);
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.terminer : " + e.getMessage());
-            return false;
+            annuler(con, "terminer", e);
+            return ResultatOperation.echec("Erreur lors de l'enregistrement de la sortie.");
+        } finally {
+            fermer(con);
+        }
+    }
+
+    private static void fermer(Connection con) {
+        if (con != null) {
+            try {
+                con.close();
+            } catch (Exception ignore) {
+                // fermeture best effort
+            }
+        }
+    }
+
+    private static void annuler(Connection con, String methode, Exception e) {
+        System.err.println("Erreur StationnementDAO." + methode + " : " + e.getMessage());
+        try {
+            con.rollback();
+        } catch (Exception ex) {
+            System.err.println("StationnementDAO." + methode + " : rollback impossible : "
+                    + ex.getMessage());
         }
     }
 
@@ -113,15 +219,18 @@ public class StationnementDAO {
         List<Stationnement> liste = new ArrayList<>();
         String sql = COLONNES + "WHERE s.statut = 'EN_COURS' ORDER BY s.date_entree";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                liste.add(remplir(rs));
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return liste;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    liste.add(remplir(rs));
+                }
             }
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.listerEnCours : " + e.getMessage());
+            System.err.println("Erreur StationnementDAO.listerEnCours : " + e.getMessage());
         }
         return liste;
     }
@@ -134,22 +243,25 @@ public class StationnementDAO {
                 + "OR pl.numero_place ILIKE ? "
                 + "ORDER BY s.date_entree DESC";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return liste;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                String motCle = "%" + mot + "%";
+                ps.setString(1, motCle);
+                ps.setString(2, motCle);
+                ps.setString(3, motCle);
+                ps.setString(4, motCle);
 
-            String motCle = "%" + mot + "%";
-            ps.setString(1, motCle);
-            ps.setString(2, motCle);
-            ps.setString(3, motCle);
-            ps.setString(4, motCle);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    liste.add(remplir(rs));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        liste.add(remplir(rs));
+                    }
                 }
             }
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.listerHistorique : " + e.getMessage());
+            System.err.println("Erreur StationnementDAO.listerHistorique : " + e.getMessage());
         }
         return liste;
     }
@@ -193,14 +305,18 @@ public class StationnementDAO {
     public double recettesAujourdhui() {
         String sql = "SELECT COALESCE(SUM(montant), 0) FROM stationnement "
                 + "WHERE statut = 'TERMINE' AND date(date_sortie) = CURRENT_DATE";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getDouble(1);
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return 0;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble(1);
+                }
             }
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.recettesAujourdhui : " + e.getMessage());
+            System.err.println("Erreur StationnementDAO.recettesAujourdhui : " + e.getMessage());
         }
         return 0;
     }
@@ -219,28 +335,35 @@ public class StationnementDAO {
                 + "ORDER BY d";
 
         List<String[]> lignes = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                lignes.add(new String[]{rs.getString("jour"), String.valueOf(rs.getDouble("total"))});
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return lignes.toArray(new String[0][]);
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lignes.add(new String[]{rs.getString("jour"), String.valueOf(rs.getDouble("total"))});
+                }
             }
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.recettesParJour : " + e.getMessage());
+            System.err.println("Erreur StationnementDAO.recettesParJour : " + e.getMessage());
         }
         return lignes.toArray(new String[0][]);
     }
 
     private int compter(String sql) {
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return 0;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (Exception e) {
-            System.out.println("Erreur StationnementDAO.compter : " + e.getMessage());
+            System.err.println("Erreur StationnementDAO.compter : " + e.getMessage());
         }
         return 0;
     }

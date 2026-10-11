@@ -49,6 +49,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import model.Utilisateur;
+import util.MotDePasse;
 
 /**
  * Page Parametres : profil, securite (mot de passe), tarif (gestion des prix)
@@ -995,19 +996,21 @@ public class ParametreForm extends JPanel {
             String nouveauTexte = new String(nouveau);
             if (utilisateurDAO.changerMotDePasse(utilisateur.getIdUtilisateur(),
                     ancienTexte, nouveauTexte)) {
-                utilisateur.setMotDePasse(nouveauTexte);
+                utilisateur.setMotDePasse(MotDePasse.hacher(nouveauTexte));
                 JOptionPane.showMessageDialog(this, "Mot de passe modifie avec succes.");
+                pwActuel.setText("");
+                pwNouveau.setText("");
+                pwConfirmation.setText("");
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Echec : mot de passe actuel incorrect ou base inaccessible.");
             }
         } finally {
+            // Les champs ne sont pas effaces en cas d'echec des validations ;
+            // seuls les tableaux en memoire sont neutralises.
             Arrays.fill(actuel, '\0');
             Arrays.fill(nouveau, '\0');
             Arrays.fill(confirmation, '\0');
-            pwActuel.setText("");
-            pwNouveau.setText("");
-            pwConfirmation.setText("");
         }
     }
 

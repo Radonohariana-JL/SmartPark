@@ -45,6 +45,7 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 
 import dao.UtilisateurDAO;
 import model.Utilisateur;
+import util.DBConnection;
 /**
  *
  * @author Radonohariana
@@ -192,6 +193,9 @@ public class Login extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Connexion réussie !");
             new Dashboard(utilisateur).setVisible(true);
             this.dispose();
+        } else if (!DBConnection.estDisponible()) {
+            JOptionPane.showMessageDialog(this,
+                    "Impossible de contacter la base de donnees. Verifiez PostgreSQL.");
         } else {
             JOptionPane.showMessageDialog(this, "Email ou mot de passe incorrect !");
         }

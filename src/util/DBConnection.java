@@ -18,8 +18,27 @@ public class DBConnection {
         try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
-            System.out.println("Erreur de connexion : " + e.getMessage());
+            // Cause technique complete dans les logs, sans masquer l'echec.
+            System.err.println("[DBConnection] echec de connexion a la base de donnees : "
+                    + e.getMessage());
+            for (Throwable t : e) {
+                System.err.println("[DBConnection]   cause : " + t.getMessage());
+            }
             return null;
         }
+    }
+
+    /** Vrai si une connexion a la base est etablie et close immediatement. */
+    public static boolean estDisponible() {
+        Connection con = getConnection();
+        if (con == null) {
+            return false;
+        }
+        try {
+            con.close();
+        } catch (SQLException ignore) {
+            // fermeture best effort
+        }
+        return true;
     }
 }
