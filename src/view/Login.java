@@ -39,6 +39,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.plaf.basic.BasicTextFieldUI;
@@ -87,6 +89,13 @@ public class Login extends javax.swing.JFrame {
     private static final int RAYON_BOUTON = 8;
     private static final int LARGEUR_CARTE = 1024;
     private static final int HAUTEUR_CHAMP = 44;
+
+    // Etats du bouton pendant une tentative de connexion.
+    private static final String TEXTE_BOUTON = "Se connecter";
+    private static final String TEXTE_CHARGEMENT = "Connexion en cours";
+
+    private javax.swing.Timer animationConnexion;
+    private boolean connexionEnCours;
 
     /**
      * Creates new form Login
@@ -178,6 +187,9 @@ public class Login extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnconnexionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnconnexionActionPerformed
+        if (connexionEnCours) {
+            return;
+        }
         String email = txtEmail.getText().trim();
         String motDePasse = String.valueOf(txtPassword.getPassword());
 
@@ -185,21 +197,241 @@ public class Login extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs !");
             return;
         }
-
-        UtilisateurDAO dao = new UtilisateurDAO();
-        Utilisateur utilisateur = dao.verifier(email, motDePasse);
-
-        if (utilisateur != null) {
-            JOptionPane.showMessageDialog(this, "Connexion réussie !");
-            new Dashboard(utilisateur).setVisible(true);
-            this.dispose();
-        } else if (!DBConnection.estDisponible()) {
-            JOptionPane.showMessageDialog(this,
-                    "Impossible de contacter la base de donnees. Verifiez PostgreSQL.");
-        } else {
-            JOptionPane.showMessageDialog(this, "Email ou mot de passe incorrect !");
-        }
+        lancerConnexion(email, motDePasse);
     }//GEN-LAST:event_btnconnexionActionPerformed
+
+    /** Statut renvoye par la tentative de connexion executee hors EDT. */
+    private enum ResultatConnexion {
+        SUCCES, IDENTIFIANTS_INCORRECTS, BASE_INDISPONIBLE, ERREUR
+    }
+
+    /** Couple statut/utilisateur remonte du SwingWorker vers l'EDT. */
+    private static final class ReponseConnexion {
+
+        private final ResultatConnexion statut;
+        private final Utilisateur utilisateur;
+
+        ReponseConnexion(ResultatConnexion statut, Utilisateur utilisateur) {
+            this.statut = statut;
+            this.utilisateur = utilisateur;
+        }
+    }
+
+    /**
+     * Lance l'authentification hors de l'EDT : etat de chargement sur le bouton,
+     * desactivation anti double-clic, puis traitement du resultat sur l'EDT.
+     */
+    private void lancerConnexion(final String email, final String motDePasse) {
+        connexionEnCours = true;
+        btnconnexion.setEnabled(false);
+        demarrerAnimation();
+
+        SwingWorker<ReponseConnexion, Void> worker = new SwingWorker<ReponseConnexion, Void>() {
+            @Override
+            protected ReponseConnexion doInBackground() {
+                try {
+                    Utilisateur utilisateur = new UtilisateurDAO().verifier(email, motDePasse);
+                    if (utilisateur != null) {
+                        return new ReponseConnexion(ResultatConnexion.SUCCES, utilisateur);
+                    }
+                    if (!DBConnection.estDisponible()) {
+                        return new ReponseConnexion(ResultatConnexion.BASE_INDISPONIBLE, null);
+                    }
+                    return new ReponseConnexion(ResultatConnexion.IDENTIFIANTS_INCORRECTS, null);
+                } catch (Exception ex) {
+                    // Jamais de mot de passe journalise : seul le message est trace.
+                    logger.log(java.util.logging.Level.SEVERE,
+                            "Echec de l'authentification : " + ex.getMessage());
+                    return new ReponseConnexion(ResultatConnexion.ERREUR, null);
+                }
+            }
+
+            @Override
+            protected void done() {
+                arreterAnimation();
+                connexionEnCours = false;
+                btnconnexion.setEnabled(true);
+
+                ReponseConnexion reponse;
+                try {
+                    reponse = get();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    signalerErreurInattendue();
+                    return;
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    logger.log(java.util.logging.Level.SEVERE,
+                            "Echec de l'authentification : " + ex.getCause());
+                    signalerErreurInattendue();
+                    return;
+                }
+                if (reponse == null) {
+                    signalerErreurInattendue();
+                    return;
+                }
+
+                switch (reponse.statut) {
+                    case SUCCES:
+                        new Dashboard(reponse.utilisateur).setVisible(true);
+                        dispose();
+                        break;
+                    case BASE_INDISPONIBLE:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "La base de donnees PostgreSQL est inaccessible. "
+                                + "Verifiez que le serveur est demarre, puis reessayez.");
+                        break;
+                    case IDENTIFIANTS_INCORRECTS:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "Adresse e-mail ou mot de passe incorrect.");
+                        txtPassword.selectAll();
+                        txtPassword.requestFocusInWindow();
+                        break;
+                    default:
+                        signalerErreurInattendue();
+                        break;
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    /** Anime le libelle du bouton pendant l'attente (aucun delai artificiel). */
+    private void demarrerAnimation() {
+        final int[] etat = {0};
+        animationConnexion = new Timer(300, e -> {
+            etat[0] = (etat[0] + 1) % 4;
+            StringBuilder libelle = new StringBuilder(TEXTE_CHARGEMENT);
+            for (int i = 0; i < etat[0]; i++) {
+                libelle.append('.');
+            }
+            btnconnexion.setText(libelle.toString());
+        });
+        btnconnexion.setText(TEXTE_CHARGEMENT);
+        animationConnexion.start();
+    }
+
+    /** Arrete l'animation et restaure l'etat normal du bouton. */
+    private void arreterAnimation() {
+        if (animationConnexion != null) {
+            animationConnexion.stop();
+            animationConnexion = null;
+        }
+        btnconnexion.setText(TEXTE_BOUTON);
+    }
+
+    private void signalerErreurInattendue() {
+        JOptionPane.showMessageDialog(this,
+                "Une erreur est survenue pendant la connexion. Veuillez reessayer.");
+    }
+
+    /**
+     * Recuperation d'acces. Verifie l'existence du compte mais ne realise aucune
+     * reinitialisation : aucun canal d'envoi securise n'etant configure, on ne
+     * simule jamais un succes et on ne divulgue jamais de mot de passe (hache).
+     */
+    private void recupererMotDePasse() {
+        Object saisie = JOptionPane.showInputDialog(this,
+                "Entrez l'adresse e-mail associee a votre compte :",
+                "Mot de passe oublie",
+                JOptionPane.QUESTION_MESSAGE);
+        if (saisie == null) {
+            return;
+        }
+        final String email = saisie.toString().trim();
+        if (email.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Veuillez renseigner une adresse e-mail.");
+            return;
+        }
+
+        new SwingWorker<Integer, Void>() {
+            @Override
+            protected Integer doInBackground() {
+                try {
+                    if (new UtilisateurDAO().existe(email)) {
+                        return 1; // compte trouve
+                    }
+                    if (!DBConnection.estDisponible()) {
+                        return 2; // base inaccessible
+                    }
+                    return 0; // aucun compte
+                } catch (Exception ex) {
+                    logger.log(java.util.logging.Level.SEVERE,
+                            "Verification du compte impossible : " + ex.getMessage());
+                    return 3; // erreur inattendue
+                }
+            }
+
+            @Override
+            protected void done() {
+                int etat;
+                try {
+                    etat = get();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    etat = 3;
+                } catch (java.util.concurrent.ExecutionException ex) {
+                    logger.log(java.util.logging.Level.SEVERE,
+                            "Verification du compte impossible : " + ex.getCause());
+                    etat = 3;
+                }
+                switch (etat) {
+                    case 1:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "Un compte est bien associe a cette adresse.\n"
+                                + "La reinitialisation automatique necessite l'envoi "
+                                + "d'un lien securise par e-mail, qui n'est pas "
+                                + "configure sur ce poste.\n"
+                                + "Contactez l'administrateur pour reinitialiser "
+                                + "votre mot de passe depuis son espace.");
+                        break;
+                    case 2:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "La base de donnees PostgreSQL est inaccessible. "
+                                + "Veuillez reessayer plus tard.");
+                        break;
+                    case 0:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "Aucun compte n'est associe a cette adresse e-mail.");
+                        break;
+                    default:
+                        JOptionPane.showMessageDialog(Login.this,
+                                "La verification a echoue. Veuillez reessayer.");
+                        break;
+                }
+            }
+        }.execute();
+    }
+
+    /** Lien discret "Mot de passe oublie ?" (meme typographie que le formulaire). */
+    private JLabel creerLienMotDePasseOublie() {
+        final String libelle = "Mot de passe oublié ?";
+        JLabel lien = new JLabel(libelle);
+        lien.setFont(police(Font.PLAIN, 12));
+        lien.setForeground(TEXTE_SECONDAIRE);
+        lien.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lien.setToolTipText("Recuperer l'acces a votre compte");
+
+        lien.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                recupererMotDePasse();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                lien.setForeground(BLEU);
+                lien.setText("<html><u>" + libelle + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                lien.setForeground(TEXTE_SECONDAIRE);
+                lien.setText(libelle);
+            }
+        });
+        return lien;
+    }
 
     /**
      * @param args the command line arguments
@@ -600,7 +832,10 @@ public class Login extends javax.swing.JFrame {
 
         ChampSaisie champMotDePasse = new ChampSaisie(txtPassword,
                 new Icone(Icone.Type.CADENAS, 18, ICONE_GREY), creerBoutonOeil());
-        ajouterLigne(form, champMotDePasse, ligne++, new Insets(0, 0, 28, 0));
+        ajouterLigne(form, champMotDePasse, ligne++, new Insets(0, 0, 6, 0));
+
+        ajouterLigne(form, aDroite(creerLienMotDePasseOublie()), ligne++,
+                new Insets(0, 0, 22, 0));
 
         styleBouton(btnconnexion);
         ajouterLigne(form, btnconnexion, ligne, new Insets(0, 0, 0, 0));
@@ -709,6 +944,14 @@ public class Login extends javax.swing.JFrame {
     /** Enveloppe un composant de facon a ce qu'il reste aligne a gauche. */
     private static JPanel aGauche(Component composant) {
         JPanel conteneur = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        conteneur.setOpaque(false);
+        conteneur.add(composant);
+        return conteneur;
+    }
+
+    /** Enveloppe un composant de facon a ce qu'il reste aligne a droite. */
+    private static JPanel aDroite(Component composant) {
+        JPanel conteneur = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         conteneur.setOpaque(false);
         conteneur.add(composant);
         return conteneur;

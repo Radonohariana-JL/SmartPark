@@ -52,6 +52,28 @@ public class UtilisateurDAO {
         return null;
     }
 
+    /**
+     * Vrai si un compte existe pour cette adresse e-mail.
+     * Ne retourne aucune donnee de mot de passe.
+     */
+    public boolean existe(String email) {
+        String sql = "SELECT 1 FROM utilisateur WHERE email = ?";
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                return false;
+            }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur UtilisateurDAO.existe : " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean modifierNom(int idUtilisateur, String nouveauNom) {
         String sql = "UPDATE utilisateur SET nom = ? WHERE id_utilisateur = ?";
         try (Connection con = DBConnection.getConnection()) {
