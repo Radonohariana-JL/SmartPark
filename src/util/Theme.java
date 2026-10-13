@@ -69,6 +69,16 @@ public final class Theme {
     public static Color ERREUR = new Color(0xDC2626);
     public static Color NEUTRE = new Color(0x94A3B8);
     public static Color OUTLINE = new Color(0x94A3B8);
+    // Accents secondaires / destructifs / survols (recharges avec le theme).
+    public static Color SECONDAIRE = new Color(0x64748B);
+    public static Color SECONDAIRE_HOVER = new Color(0x475569);
+    public static Color SECONDAIRE_PRESSED = new Color(0x334155);
+    public static Color DESTRUCTIF = new Color(0xDC2626);
+    public static Color DESTRUCTIF_HOVER = new Color(0xB91C1C);
+    public static Color DESTRUCTIF_PRESSED = new Color(0x7F1D1D);
+    public static Color SURVOL_LIGNE = new Color(0xEEF2F7);
+    public static Color SURVOL_MODIFIER = new Color(0xDBEAFE);
+    public static Color SURVOL_SUPPRIMER = new Color(0xFEE2E2);
 
     private static final String CLE_BG = "smartpark.theme.bg";
     private static final String CLE_FG = "smartpark.theme.fg";
@@ -172,6 +182,15 @@ public final class Theme {
             ERREUR = new Color(0xF87171);
             NEUTRE = new Color(0x94A3B8);
             OUTLINE = new Color(0x94A3B8);
+            SECONDAIRE = new Color(0x94A3B8);
+            SECONDAIRE_HOVER = new Color(0x8494A6);
+            SECONDAIRE_PRESSED = new Color(0x64748B);
+            DESTRUCTIF = new Color(0xF87171);
+            DESTRUCTIF_HOVER = new Color(0xEF4444);
+            DESTRUCTIF_PRESSED = new Color(0xDC2626);
+            SURVOL_LIGNE = new Color(0x243044);
+            SURVOL_MODIFIER = new Color(0x1E3A8A);
+            SURVOL_SUPPRIMER = new Color(0x3A1515);
         } else {
             FOND = new Color(0xF1F5F9);
             CARTE = new Color(0xFFFFFF);
@@ -201,6 +220,15 @@ public final class Theme {
             ERREUR = new Color(0xDC2626);
             NEUTRE = new Color(0x94A3B8);
             OUTLINE = new Color(0x94A3B8);
+            SECONDAIRE = new Color(0x64748B);
+            SECONDAIRE_HOVER = new Color(0x475569);
+            SECONDAIRE_PRESSED = new Color(0x334155);
+            DESTRUCTIF = new Color(0xDC2626);
+            DESTRUCTIF_HOVER = new Color(0xB91C1C);
+            DESTRUCTIF_PRESSED = new Color(0x7F1D1D);
+            SURVOL_LIGNE = new Color(0xEEF2F7);
+            SURVOL_MODIFIER = new Color(0xDBEAFE);
+            SURVOL_SUPPRIMER = new Color(0xFEE2E2);
         }
     }
 
@@ -320,12 +348,12 @@ public final class Theme {
         }
 
         JComponent j = (JComponent) racine;
-        if (estPeintPersonnalise(j)) {
-            return; // sous-arbre a rendu vectoriel : laisse tel quel
-        }
+        // Un composant a rendu vectoriel conserve son propre dessin, mais ses
+        // enfants (labels, champs) doivent tout de meme etre recolorises.
+        boolean peintPersonnalise = estPeintPersonnalise(j);
 
         boolean surfaceSombre = false;
-        if (j.isOpaque()) {
+        if (!peintPersonnalise && j.isOpaque()) {
             Color bg = j.getBackground();
             if (bg != null) {
                 Integer mappe = mapperBg(bg);
@@ -339,7 +367,7 @@ public final class Theme {
             }
         }
 
-        if (!surfaceSombre) {
+        if (!peintPersonnalise && !surfaceSombre) {
             Color fg = j.getForeground();
             Integer mappe = mapperFg(fg);
             if (mappe != null) {
@@ -392,9 +420,16 @@ public final class Theme {
         try {
             Method m = composant.getClass().getMethod("paintComponent", Graphics.class);
             Class<?> declarant = m.getDeclaringClass();
-            return declarant != JComponent.class
-                    && declarant != JPanel.class
-                    && declarant != JLabel.class;
+            if (declarant == JComponent.class
+                    || declarant == JPanel.class
+                    || declarant == JLabel.class) {
+                return false;
+            }
+            // Les composants Swing/JDK recolorables (JTable, JComboBox, JList...)
+            // ne sont pas consideres comme "dessin personnalise" : leur fond doit
+            // etre remappe. Seuls les composants du projet (package view.*) le sont.
+            String nom = declarant.getName();
+            return !nom.startsWith("javax.swing.") && !nom.startsWith("java.awt.");
         } catch (NoSuchMethodException e) {
             return false;
         }
@@ -466,6 +501,47 @@ public final class Theme {
     private static double luminance(Color c) {
         return (0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c.getBlue())
                 / 255.0;
+    }
+
+    /**
+     * Adapte une couleur de FOND capturee par un composant a dessin personnalise
+     * (les champs {@code final} initialises a la construction ne se mettent pas a
+     * jour tout seuls). La table clair/sombre est appliquee dans les deux sens :
+     * une couleur d'origine claire devient sombre en mode sombre, et inversement.
+     * Les couleurs hors palette (accents specifiques) sont renvoyees inchangees.
+     */
+    public static Color adapteFond(Color couleur) {
+        return adapter(couleur, FONDS);
+    }
+
+    /** Idem {@link #adapteFond} pour une couleur de TEXTE / trait / icone. */
+    public static Color adapteTexte(Color couleur) {
+        return adapter(couleur, TEXTES);
+    }
+
+    /**
+     * Adapte une couleur dont la nature (fond ou texte) n'est pas connue a
+     * l'avance : les tables de fonds puis de textes sont essayees.
+     */
+    public static Color adapte(Color couleur) {
+        Color c = adapter(couleur, FONDS);
+        if (c != couleur) {
+            return c;
+        }
+        return adapter(couleur, TEXTES);
+    }
+
+    private static Color adapter(Color couleur, int[][] table) {
+        if (couleur == null) {
+            return null;
+        }
+        int rgb = couleur.getRGB() & 0xFFFFFF;
+        for (int[] paire : table) {
+            if (rgb == paire[0] || rgb == paire[1]) {
+                return new Color(sombre ? paire[1] : paire[0]);
+            }
+        }
+        return couleur;
     }
 
     private static void notifierEcouteurs() {

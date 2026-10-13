@@ -46,6 +46,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import model.Proprietaire;
 import model.Vehicule;
+import util.Devise;
+import util.I18n;
+import util.Theme;
 
 /**
  * Gestion des vehicules : ajout, modification, suppression, recherche.
@@ -65,7 +68,8 @@ public class VehiculeForm extends JPanel {
 
     private final JTextField txtRecherche = new JTextField(15);
 
-    private final JButton btnAjouter = new BoutonStyle("Ajouter", BoutonStyle.Type.PRIMAIRE, false);
+    // zoneChamps : carte de saisie, visible uniquement en mode edition.
+    private JPanel zoneChamps;
     // btnModifier est reutilise comme « Enregistrer les modifications » (mode edition).
     private final JButton btnModifier = new BoutonStyle("Enregistrer les modifications", BoutonStyle.Type.PRIMAIRE, false);
     private final JButton btnAnnuler = new BoutonStyle("Annuler", BoutonStyle.Type.NEUTRE, false);
@@ -88,28 +92,54 @@ public class VehiculeForm extends JPanel {
 
     private final VehiculeDAO dao = new VehiculeDAO();
 
-    // ---------------------------------------------------------------------
-    // PALETTE DE COULEURS
-    // ---------------------------------------------------------------------
-    private static final Color FOND               = new Color(0xF1F5F9);
-    private static final Color CARTE              = new Color(0xFFFFFF);
-    private static final Color BORDURE            = new Color(0xE2E8F0);
-    private static final Color PRIMAIRE           = new Color(0x2563EB);
-    private static final Color PRIMAIRE_HOVER     = new Color(0x1D4ED8);
-    private static final Color PRIMAIRE_PRESSED   = new Color(0x1E40AF);
-    private static final Color SECONDAIRE         = new Color(0x64748B);
-    private static final Color SECONDAIRE_HOVER   = new Color(0x475569);
-    private static final Color SECONDAIRE_PRESSED = new Color(0x334155);
-    private static final Color DESTRUCTIF         = new Color(0xDC2626);
-    private static final Color DESTRUCTIF_HOVER   = new Color(0xB91C1C);
-    private static final Color DESTRUCTIF_PRESSED = new Color(0x7F1D1D);
-    private static final Color TEXTE              = new Color(0x0F172A);
-    private static final Color TEXTE_SECONDAIRE   = new Color(0x64748B);
-    private static final Color LABEL              = new Color(0x334155);
-    private static final Color BORDURE_CHAMP      = new Color(0xCBD5E1);
-    private static final Color ENTETE_TABLE       = new Color(0xF8FAFC);
-    private static final Color LIGNE_ALTERNEE     = new Color(0xF8FAFC);
-    private static final Color SELECTION          = new Color(0xDBEAFE);
+    private static Color FOND;
+    private static Color CARTE;
+    private static Color BORDURE;
+    private static Color PRIMAIRE;
+    private static Color PRIMAIRE_HOVER;
+    private static Color PRIMAIRE_PRESSED;
+    private static Color SECONDAIRE;
+    private static Color SECONDAIRE_HOVER;
+    private static Color SECONDAIRE_PRESSED;
+    private static Color DESTRUCTIF;
+    private static Color DESTRUCTIF_HOVER;
+    private static Color DESTRUCTIF_PRESSED;
+    private static Color TEXTE;
+    private static Color TEXTE_SECONDAIRE;
+    private static Color LABEL;
+    private static Color BORDURE_CHAMP;
+    private static Color ENTETE_TABLE;
+    private static Color LIGNE_ALTERNEE;
+    private static Color SELECTION;
+    private static Color SURVOL_LIGNE;
+
+    static {
+        Theme.addEcouteur(VehiculeForm::majPalette);
+        majPalette();
+    }
+
+    private static void majPalette() {
+        FOND = Theme.FOND;
+        CARTE = Theme.CARTE;
+        BORDURE = Theme.BORDURE;
+        PRIMAIRE = Theme.PRIMAIRE;
+        PRIMAIRE_HOVER = Theme.PRIMAIRE_HOVER;
+        PRIMAIRE_PRESSED = Theme.PRIMAIRE_PRESSED;
+        SECONDAIRE = Theme.SECONDAIRE;
+        SECONDAIRE_HOVER = Theme.SECONDAIRE_HOVER;
+        SECONDAIRE_PRESSED = Theme.SECONDAIRE_PRESSED;
+        DESTRUCTIF = Theme.DESTRUCTIF;
+        DESTRUCTIF_HOVER = Theme.DESTRUCTIF_HOVER;
+        DESTRUCTIF_PRESSED = Theme.DESTRUCTIF_PRESSED;
+        TEXTE = Theme.TEXTE;
+        TEXTE_SECONDAIRE = Theme.TEXTE_SECONDAIRE;
+        LABEL = Theme.LABEL;
+        BORDURE_CHAMP = Theme.BORDURE_CHAMP;
+        ENTETE_TABLE = Theme.CARTE_ENTETE;
+        LIGNE_ALTERNEE = Theme.LIGNE_ALTERNEE;
+        SELECTION = Theme.SELECTION;
+        SURVOL_LIGNE = Theme.SURVOL_LIGNE;
+    }
 
     public VehiculeForm() {
         setLayout(new BorderLayout());
@@ -177,6 +207,10 @@ public class VehiculeForm extends JPanel {
         lblBandeau.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         lblBandeau.setVisible(false);
 
+        // Carte de saisie (bandeau + champs) : visible uniquement en edition.
+        zoneChamps = new JPanel(new GridBagLayout());
+        zoneChamps.setOpaque(false);
+
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.HORIZONTAL;
         g.anchor = GridBagConstraints.WEST;
@@ -187,76 +221,95 @@ public class VehiculeForm extends JPanel {
         g.gridx = 0;
         g.gridwidth = 3;
         g.insets = new Insets(0, 0, 16, 0);
-        carte.add(lblBandeau, g);
+        zoneChamps.add(lblBandeau, g);
 
         // Ligne 1 : libelles (Immatriculation, Marque, Couleur).
         g.gridy = 1;
         g.gridwidth = 1;
         g.insets = new Insets(0, 0, 0, 16);
         g.gridx = 0;
-        carte.add(libelle("Immatriculation"), g);
+        zoneChamps.add(libelle("Immatriculation"), g);
         g.gridx = 1;
-        carte.add(libelle("Marque"), g);
+        zoneChamps.add(libelle("Marque"), g);
         g.gridx = 2;
         g.insets = new Insets(0, 0, 0, 0);
-        carte.add(libelle("Couleur"), g);
+        zoneChamps.add(libelle("Couleur"), g);
 
         // Ligne 2 : champs.
         g.gridy = 2;
         g.insets = new Insets(8, 0, 0, 16);
         g.gridx = 0;
-        carte.add(txtImmatriculation, g);
+        zoneChamps.add(txtImmatriculation, g);
         g.gridx = 1;
-        carte.add(txtMarque, g);
+        zoneChamps.add(txtMarque, g);
         g.gridx = 2;
         g.insets = new Insets(8, 0, 0, 0);
-        carte.add(txtCouleur, g);
+        zoneChamps.add(txtCouleur, g);
 
         // Ligne 3 : libelles (Type, Proprietaire).
         g.gridy = 3;
         g.gridx = 0;
         g.insets = new Insets(16, 0, 0, 16);
-        carte.add(libelle("Type"), g);
+        zoneChamps.add(libelle("Type"), g);
         g.gridx = 1;
         g.gridwidth = 2;
         g.insets = new Insets(16, 0, 0, 0);
-        carte.add(libelle("Propriétaire"), g);
+        zoneChamps.add(libelle("Propriétaire"), g);
 
         // Ligne 4 : combos.
         g.gridy = 4;
         g.gridx = 0;
         g.gridwidth = 1;
         g.insets = new Insets(8, 0, 0, 16);
-        carte.add(comboType, g);
+        zoneChamps.add(comboType, g);
         g.gridx = 1;
         g.gridwidth = 2;
         g.insets = new Insets(8, 0, 0, 0);
-        carte.add(comboProprietaire, g);
+        zoneChamps.add(comboProprietaire, g);
 
-        // Ligne 5 : separateur.
-        g.gridy = 5;
-        g.gridx = 0;
-        g.gridwidth = 3;
-        g.insets = new Insets(16, 0, 16, 0);
+        GridBagConstraints gc = new GridBagConstraints();
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.anchor = GridBagConstraints.WEST;
+        gc.weightx = 1;
+        gc.gridx = 0;
+        gc.gridy = 0;
+        gc.gridwidth = 3;
+        gc.insets = new Insets(0, 0, 16, 0);
+        carte.add(zoneChamps, gc);
+
+        // Ligne suivante : separateur.
+        gc = new GridBagConstraints();
+        gc.gridx = 0;
+        gc.gridy = 1;
+        gc.gridwidth = 3;
+        gc.weightx = 1;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        gc.insets = new Insets(0, 0, 16, 0);
         JPanel separateur = new JPanel();
         separateur.setOpaque(true);
         separateur.setBackground(BORDURE);
         separateur.setPreferredSize(new Dimension(1, 1));
-        carte.add(separateur, g);
+        carte.add(separateur, gc);
 
-        // Ligne 6 : barre de recherche.
-        g.gridy = 6;
-        g.insets = new Insets(0, 0, 0, 0);
-        carte.add(creerBarreRecherche(), g);
+        // Barre de recherche.
+        gc = new GridBagConstraints();
+        gc.gridx = 0;
+        gc.gridy = 2;
+        gc.gridwidth = 3;
+        gc.weightx = 1;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        carte.add(creerBarreRecherche(), gc);
 
-        // Ligne 7 : boutons d'action alignes a droite.
-        g.gridy = 7;
-        g.anchor = GridBagConstraints.EAST;
-        g.insets = new Insets(16, 0, 0, 0);
-        carte.add(creerBarreBoutons(), g);
+        // Boutons d'action alignes a droite.
+        gc = new GridBagConstraints();
+        gc.gridx = 0;
+        gc.gridy = 3;
+        gc.gridwidth = 3;
+        gc.anchor = GridBagConstraints.EAST;
+        gc.insets = new Insets(16, 0, 0, 0);
+        carte.add(creerBarreBoutons(), gc);
 
         // Evenements.
-        btnAjouter.addActionListener(e -> ajouter());
         btnModifier.addActionListener(e -> {
             modifier();
             if (table.getSelectedRow() < 0) {
@@ -295,15 +348,14 @@ public class VehiculeForm extends JPanel {
         barre.add(btnAnnuler);
         barre.add(btnModifier);
         barre.add(btnActualiser);
-        barre.add(btnAjouter);
         return barre;
     }
 
     private void activerModeEdition(boolean actif) {
         lblBandeau.setVisible(actif);
+        zoneChamps.setVisible(actif);
         btnModifier.setVisible(actif);
         btnAnnuler.setVisible(actif);
-        btnAjouter.setEnabled(!actif);
     }
 
     // ---------------------------------------------------------------------
@@ -376,32 +428,6 @@ public class VehiculeForm extends JPanel {
     // ---------------------------------------------------------------
     // Operations CRUD (inchangees)
     // ---------------------------------------------------------------
-    private void ajouter() {
-        if (!champsValides()) {
-            return;
-        }
-        String immatriculation = txtImmatriculation.getText().trim().toUpperCase();
-        if (dao.estImmatriculationUtilisee(immatriculation, null)) {
-            JOptionPane.showMessageDialog(this,
-                    "Cette immatriculation existe deja dans la base.");
-            return;
-        }
-        Vehicule v = new Vehicule(
-                immatriculation,
-                txtMarque.getText().trim(),
-                txtCouleur.getText().trim(),
-                (String) comboType.getSelectedItem(),
-                ((Proprietaire) comboProprietaire.getSelectedItem()).getIdProprietaire());
-        if (dao.ajouter(v)) {
-            JOptionPane.showMessageDialog(this, "Vehicule ajoute avec succes.");
-            viderChamps();
-            actualiser();
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Erreur lors de l'ajout du vehicule (base indisponible ou donnees invalides).");
-        }
-    }
-
     private void modifier() {
         int ligne = table.getSelectedRow();
         if (ligne < 0) {
@@ -619,7 +645,7 @@ public class VehiculeForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapte(couleur));
             g2.setStroke(new BasicStroke(epaisseur));
             g2.drawRoundRect(x + epaisseur / 2, y + epaisseur / 2,
                     w - epaisseur - 1, h - epaisseur - 1, rayon * 2, rayon * 2);

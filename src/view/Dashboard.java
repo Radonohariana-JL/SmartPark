@@ -1375,11 +1375,11 @@ public class Dashboard extends JFrame {
             int w = getWidth();
             int h = getHeight();
             if (fond != null) {
-                g2.setColor(fond);
+                g2.setColor(Theme.adapteFond(fond));
                 g2.fillRoundRect(0, 0, w, h, rayon, rayon);
             }
             if (bordure != null) {
-                g2.setColor(bordure);
+                g2.setColor(Theme.adapteFond(bordure));
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new RoundRectangle2D.Double(0.5, 0.5, w - 1, h - 1, rayon, rayon));
             }
@@ -1469,7 +1469,7 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(accent);
+            g2.setColor(Theme.adapteTexte(accent));
             g2.fillRect(0, getHeight() - 2, getWidth(), 2);
             g2.dispose();
         }
@@ -1479,8 +1479,10 @@ public class Dashboard extends JFrame {
     private static class BoiteIcone extends JPanel {
 
         private final Icone icone;
+        private final Color couleur;
 
         BoiteIcone(Icone.Type type, int tailleIcone, Color couleur) {
+            this.couleur = couleur;
             this.icone = new Icone(type, tailleIcone, couleur);
             setOpaque(false);
             setPreferredSize(new Dimension(32, 32));
@@ -1497,6 +1499,7 @@ public class Dashboard extends JFrame {
             g2.fillRect(0, 0, getWidth(), getHeight());
             g2.setColor(BORDURE);
             g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            icone.setCouleur(Theme.adapteTexte(couleur));
             icone.paintIcon(this, g2, (getWidth() - icone.getIconWidth()) / 2,
                     (getHeight() - icone.getIconHeight()) / 2);
             g2.dispose();
@@ -1508,20 +1511,26 @@ public class Dashboard extends JFrame {
 
         private final Color fond;
         private final Color bordure;
+        private final Color couleurTexte;
+        private final Icone icone;
         private final JLabel texte;
 
         Chip(String libelle, Color fond, Color bordure, Color couleurTexte,
                 Color point, Icone.Type typeIcone) {
             this.fond = fond;
             this.bordure = bordure;
+            this.couleurTexte = couleurTexte;
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
             setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+            Icone ic = null;
             if (point != null) {
                 add(new PointColor(point, 6));
             } else if (typeIcone != null) {
-                add(new JLabel(new Icone(typeIcone, 13, couleurTexte)));
+                ic = new Icone(typeIcone, 13, couleurTexte);
+                add(new JLabel(ic));
             }
+            this.icone = ic;
             texte = new JLabel(libelle);
             texte.setFont(police(Font.BOLD, 11));
             texte.setForeground(couleurTexte);
@@ -1537,9 +1546,14 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fond);
+            Color cTexte = Theme.adapteTexte(couleurTexte);
+            if (icone != null) {
+                icone.setCouleur(cTexte);
+            }
+            texte.setForeground(cTexte);
+            g2.setColor(Theme.adapteFond(fond));
             g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.setColor(bordure);
+            g2.setColor(Theme.adapteFond(bordure));
             g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
             g2.dispose();
         }
@@ -1563,7 +1577,7 @@ public class Dashboard extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapteTexte(couleur));
             g2.fillRect(0, 0, taille, taille);
             g2.dispose();
         }
@@ -1589,7 +1603,7 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapteTexte(couleur));
             g2.fillOval(0, 0, taille, taille);
             g2.dispose();
         }
@@ -1683,8 +1697,10 @@ public class Dashboard extends JFrame {
 
         private final Icone icone;
         private final Color fond;
+        private final Color couleur;
 
         PastilleIcone(Icone.Type type, int tailleIcone, Color fond, Color couleur) {
+            this.couleur = couleur;
             this.icone = new Icone(type, tailleIcone, couleur);
             this.fond = fond;
             setOpaque(false);
@@ -1698,10 +1714,11 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fond);
+            g2.setColor(Theme.adapteFond(fond));
             g2.fillOval(0, 0, getWidth() - 1, getHeight() - 1);
             g2.setColor(BORDURE);
             g2.drawOval(0, 0, getWidth() - 1, getHeight() - 1);
+            icone.setCouleur(Theme.adapteTexte(couleur));
             icone.paintIcon(this, g2, (getWidth() - icone.getIconWidth()) / 2,
                     (getHeight() - icone.getIconHeight()) / 2);
             g2.dispose();

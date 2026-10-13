@@ -42,8 +42,11 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import model.Stationnement;
 import model.Vehicule;
+import util.DateUtils;
 import util.Devise;
+import util.I18n;
 import util.NotificationCentre;
+import util.Theme;
 
 /**
  * Enregistre la sortie d'un vehicule : calcule la duree et le montant,
@@ -55,26 +58,58 @@ import util.NotificationCentre;
  */
 public class SortieForm extends JPanel {
 
-    // ---------------------------------------------------------------------
-    // PALETTE DE COULEURS (version claire)
-    // ---------------------------------------------------------------------
-    private static final Color FOND              = new Color(0xF1F5F9);
-    private static final Color CARTE             = new Color(0xFFFFFF);
-    private static final Color BANDE             = new Color(0xF8FAFC);
-    private static final Color BORDURE           = new Color(0xE2E8F0);
-    private static final Color PRIMAIRE          = new Color(0x2563EB);
-    private static final Color PRIMAIRE_HOVER    = new Color(0x1D4ED8);
-    private static final Color PRIMAIRE_PRESSED  = new Color(0x1E40AF);
-    private static final Color SECONDAIRE        = new Color(0x64748B);
-    private static final Color TEXTE             = new Color(0x0F172A);
-    private static final Color TEXTE_SECONDAIRE  = new Color(0x64748B);
-    private static final Color LABEL             = new Color(0x334155);
-    private static final Color BORDURE_CHAMP     = new Color(0xCBD5E1);
-    private static final Color SELECTION         = new Color(0xDBEAFE);
-    private static final Color VERT              = new Color(0x16A34A);
-    private static final Color VERT_FOND         = new Color(0xDCFCE7);
-    private static final Color BLEU_FOND         = new Color(0xEFF6FF);
-    private static final Color BLEU_BORDURE      = new Color(0xBFDBFE);
+    private static Color FOND;
+    private static Color CARTE;
+    private static Color BANDE;
+    private static Color BORDURE;
+    private static Color PRIMAIRE;
+    private static Color PRIMAIRE_HOVER;
+    private static Color PRIMAIRE_PRESSED;
+    private static Color SECONDAIRE;
+    private static Color SECONDAIRE_HOVER;
+    private static Color SECONDAIRE_PRESSED;
+    private static Color DESTRUCTIF;
+    private static Color DESTRUCTIF_HOVER;
+    private static Color DESTRUCTIF_PRESSED;
+    private static Color TEXTE;
+    private static Color TEXTE_SECONDAIRE;
+    private static Color LABEL;
+    private static Color BORDURE_CHAMP;
+    private static Color SELECTION;
+    private static Color VERT;
+    private static Color VERT_FOND;
+    private static Color BLEU_FOND;
+    private static Color BLEU_BORDURE;
+
+    static {
+        Theme.addEcouteur(SortieForm::majPalette);
+        majPalette();
+    }
+
+    private static void majPalette() {
+        FOND = Theme.FOND;
+        CARTE = Theme.CARTE;
+        BANDE = Theme.BANDE;
+        BORDURE = Theme.BORDURE;
+        PRIMAIRE = Theme.PRIMAIRE;
+        PRIMAIRE_HOVER = Theme.PRIMAIRE_HOVER;
+        PRIMAIRE_PRESSED = Theme.PRIMAIRE_PRESSED;
+        SECONDAIRE = Theme.SECONDAIRE;
+        SECONDAIRE_HOVER = Theme.SECONDAIRE_HOVER;
+        SECONDAIRE_PRESSED = Theme.SECONDAIRE_PRESSED;
+        DESTRUCTIF = Theme.DESTRUCTIF;
+        DESTRUCTIF_HOVER = Theme.DESTRUCTIF_HOVER;
+        DESTRUCTIF_PRESSED = Theme.DESTRUCTIF_PRESSED;
+        TEXTE = Theme.TEXTE;
+        TEXTE_SECONDAIRE = Theme.TEXTE_SECONDAIRE;
+        LABEL = Theme.LABEL;
+        BORDURE_CHAMP = Theme.BORDURE_CHAMP;
+        SELECTION = Theme.SELECTION;
+        VERT = Theme.SUCCES;
+        VERT_FOND = Theme.VERT_FOND;
+        BLEU_FOND = Theme.BLEU_FOND;
+        BLEU_BORDURE = Theme.BLEU_BORDURE;
+    }
 
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter HEURE = DateTimeFormatter.ofPattern("HH:mm");
@@ -1078,7 +1113,7 @@ public class SortieForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fond);
+            g2.setColor(Theme.adapteFond(fond));
             int h = getHeight();
             g2.fillRoundRect(0, 0, getWidth(), h, h, h);
             g2.dispose();
@@ -1140,7 +1175,7 @@ public class SortieForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapteTexte(couleur));
             g2.fill(new Ellipse2D.Double(0, 0, diametre, diametre));
             g2.dispose();
         }
@@ -1166,7 +1201,7 @@ public class SortieForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fond);
+            g2.setColor(Theme.adapteFond(fond));
             g2.fillRoundRect(0, 0, cote, cote, 8, 8);
             icone.paintIcon(this, g2, (cote - icone.getIconWidth()) / 2,
                     (cote - icone.getIconHeight()) / 2);
@@ -1192,7 +1227,7 @@ public class SortieForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapte(couleur));
             g2.setStroke(new java.awt.BasicStroke(epaisseur));
             g2.drawRoundRect(x + epaisseur / 2, y + epaisseur / 2,
                     w - epaisseur - 1, h - epaisseur - 1, rayon * 2, rayon * 2);

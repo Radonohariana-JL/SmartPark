@@ -1,8 +1,11 @@
 package util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import javax.swing.SwingUtilities;
 
 /**
  * Internationalisation de SmartPark (architecture reutilisable).
@@ -20,6 +23,7 @@ public final class I18n {
 
     private static ResourceBundle bundle;
     private static String langue;
+    private static final List<Runnable> ECOUTEURS = new ArrayList<>();
 
     static {
         charger(PreferencesApp.getLangue());
@@ -54,6 +58,15 @@ public final class I18n {
         }
     }
 
+    /** Applique la langue (charge + notifie les ecouteurs). */
+    public static void appliquerEtNotifier(String nouvelleLangue) {
+        String ancienne = langue;
+        charger(nouvelleLangue);
+        if (!langue.equals(ancienne) || bundle == null) {
+            notifierEcouteurs();
+        }
+    }
+
     public static String langue() {
         return langue;
     }
@@ -73,5 +86,29 @@ public final class I18n {
     /** Traduit une clef, avec la clef elle-meme comme repli. */
     public static String t(String clef) {
         return t(clef, clef);
+    }
+
+    /** Enregistre un ecouteur notifie a chaque changement de langue. */
+    public static void addEcouteur(Runnable ecouteur) {
+        if (ecouteur != null && !ECOUTEURS.contains(ecouteur)) {
+            ECOUTEURS.add(ecouteur);
+        }
+    }
+
+    private static void notifierEcouteurs() {
+        Runnable action = () -> {
+            for (Runnable e : new ArrayList<>(ECOUTEURS)) {
+                try {
+                    e.run();
+                } catch (RuntimeException ex) {
+                    System.err.println("[I18n] ecouteur en echec : " + ex.getMessage());
+                }
+            }
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            action.run();
+        } else {
+            SwingUtilities.invokeLater(action);
+        }
     }
 }

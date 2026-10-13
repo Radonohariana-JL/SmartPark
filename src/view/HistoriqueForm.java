@@ -39,6 +39,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import model.Stationnement;
 import util.DateUtils;
+import util.Devise;
+import util.I18n;
+import util.Theme;
 
 /**
  * Historique des stationnements, avec recherche.
@@ -76,33 +79,64 @@ public class HistoriqueForm extends JPanel {
 
     private final StationnementDAO dao = new StationnementDAO();
 
-    // ---------------------------------------------------------------------
-    // PALETTE DE COULEURS
-    // ---------------------------------------------------------------------
-    private static final Color FOND               = new Color(0xF1F5F9);
-    private static final Color CARTE              = new Color(0xFFFFFF);
-    private static final Color BORDURE            = new Color(0xE2E8F0);
-    private static final Color PRIMAIRE           = new Color(0x2563EB);
-    private static final Color PRIMAIRE_HOVER     = new Color(0x1D4ED8);
-    private static final Color PRIMAIRE_PRESSED   = new Color(0x1E40AF);
-    private static final Color SECONDAIRE         = new Color(0x64748B);
-    private static final Color SECONDAIRE_HOVER   = new Color(0x475569);
-    private static final Color SECONDAIRE_PRESSED = new Color(0x334155);
-    private static final Color DESTRUCTIF         = new Color(0xDC2626);
-    private static final Color DESTRUCTIF_HOVER   = new Color(0xB91C1C);
-    private static final Color DESTRUCTIF_PRESSED = new Color(0x7F1D1D);
-    private static final Color TEXTE              = new Color(0x0F172A);
-    private static final Color TEXTE_SECONDAIRE   = new Color(0x64748B);
-    private static final Color LABEL              = new Color(0x334155);
-    private static final Color BORDURE_CHAMP      = new Color(0xCBD5E1);
-    private static final Color ENTETE_TABLE       = new Color(0xF8FAFC);
-    private static final Color LIGNE_ALTERNEE     = new Color(0xF8FAFC);
-    private static final Color SELECTION          = new Color(0xDBEAFE);
+    private static Color FOND;
+    private static Color CARTE;
+    private static Color BORDURE;
+    private static Color PRIMAIRE;
+    private static Color PRIMAIRE_HOVER;
+    private static Color PRIMAIRE_PRESSED;
+    private static Color SECONDAIRE;
+    private static Color SECONDAIRE_HOVER;
+    private static Color SECONDAIRE_PRESSED;
+    private static Color DESTRUCTIF;
+    private static Color DESTRUCTIF_HOVER;
+    private static Color DESTRUCTIF_PRESSED;
+    private static Color TEXTE;
+    private static Color TEXTE_SECONDAIRE;
+    private static Color LABEL;
+    private static Color BORDURE_CHAMP;
+    private static Color ENTETE_TABLE;
+    private static Color LIGNE_ALTERNEE;
+    private static Color SELECTION;
+    private static Color PASTILLE_EN_COURS_FOND;
+    private static Color PASTILLE_EN_COURS_TEXTE;
+    private static Color PASTILLE_TERMINE_FOND;
+    private static Color PASTILLE_TERMINE_TEXTE;
+    private static Color VERT_FOND;
+    private static Color SURVOL_LIGNE;
 
-    private static final Color PASTILLE_EN_COURS_FOND    = new Color(0xDBEAFE);
-    private static final Color PASTILLE_EN_COURS_TEXTE   = new Color(0x1D4ED8);
-    private static final Color PASTILLE_TERMINE_FOND     = new Color(0xDCFCE7);
-    private static final Color PASTILLE_TERMINE_TEXTE    = new Color(0x15803D);
+    static {
+        Theme.addEcouteur(HistoriqueForm::majPalette);
+        majPalette();
+    }
+
+    private static void majPalette() {
+        FOND = Theme.FOND;
+        CARTE = Theme.CARTE;
+        BORDURE = Theme.BORDURE;
+        PRIMAIRE = Theme.PRIMAIRE;
+        PRIMAIRE_HOVER = Theme.PRIMAIRE_HOVER;
+        PRIMAIRE_PRESSED = Theme.PRIMAIRE_PRESSED;
+        SECONDAIRE = Theme.SECONDAIRE;
+        SECONDAIRE_HOVER = Theme.SECONDAIRE_HOVER;
+        SECONDAIRE_PRESSED = Theme.SECONDAIRE_PRESSED;
+        DESTRUCTIF = Theme.DESTRUCTIF;
+        DESTRUCTIF_HOVER = Theme.DESTRUCTIF_HOVER;
+        DESTRUCTIF_PRESSED = Theme.DESTRUCTIF_PRESSED;
+        TEXTE = Theme.TEXTE;
+        TEXTE_SECONDAIRE = Theme.TEXTE_SECONDAIRE;
+        LABEL = Theme.LABEL;
+        BORDURE_CHAMP = Theme.BORDURE_CHAMP;
+        ENTETE_TABLE = Theme.CARTE_ENTETE;
+        LIGNE_ALTERNEE = Theme.LIGNE_ALTERNEE;
+        SELECTION = Theme.SELECTION;
+        PASTILLE_EN_COURS_FOND = Theme.BLEU_FOND;
+        PASTILLE_EN_COURS_TEXTE = Theme.PRIMAIRE_FONCE;
+        PASTILLE_TERMINE_FOND = Theme.VERT_FOND;
+        PASTILLE_TERMINE_TEXTE = Theme.SUCCES;
+        VERT_FOND = Theme.VERT_FOND;
+        SURVOL_LIGNE = Theme.SURVOL_LIGNE;
+    }
 
     public HistoriqueForm() {
         setLayout(new BorderLayout());
@@ -408,7 +442,7 @@ public class HistoriqueForm extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(couleur);
+            g2.setColor(Theme.adapte(couleur));
             g2.setStroke(new BasicStroke(epaisseur));
             g2.drawRoundRect(x + epaisseur / 2, y + epaisseur / 2,
                     w - epaisseur - 1, h - epaisseur - 1, rayon * 2, rayon * 2);
