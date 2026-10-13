@@ -75,14 +75,30 @@ public class Login extends javax.swing.JFrame {
     private static final Color BLEU_HOVER           = new Color(0x1D4ED8);
     private static final Color BLEU_PRESSED         = new Color(0x1E40AF);
     private static final Color BLANC                = new Color(0xFFFFFF);
-    private static final Color CARTE                = new Color(0xFFFFFF);
-    private static final Color TEXTE                = new Color(0x0F172A);
-    private static final Color TEXTE_SECONDAIRE     = new Color(0x64748B);
-    private static final Color LABEL                = new Color(0x334155);
-    private static final Color BORDURE_CHAMP        = new Color(0xE2E8F0);
-    private static final Color CHAMP_FOND           = new Color(0xF8FAFC);
+    private static Color CARTE;
+    private static Color TEXTE;
+    private static Color TEXTE_SECONDAIRE;
+    private static Color LABEL;
+    private static Color BORDURE_CHAMP;
+    private static Color CHAMP_FOND;
+    private static Color BORDURE_CLAIR;
     private static final Color ICONE_GREY           = new Color(0x94A3B8);
     private static final Color ICONE_ACTIVE         = new Color(0x2563EB);
+
+    static {
+        util.Theme.addEcouteur(Login::majPalette);
+        majPalette();
+    }
+
+    private static void majPalette() {
+        CARTE = util.Theme.CARTE;
+        TEXTE = util.Theme.TEXTE;
+        TEXTE_SECONDAIRE = util.Theme.TEXTE_SECONDAIRE;
+        LABEL = util.Theme.LABEL;
+        BORDURE_CHAMP = util.Theme.BORDURE_CHAMP;
+        CHAMP_FOND = util.Theme.BANDE;
+        BORDURE_CLAIR = util.Theme.FOND;
+    }
 
     private static final int RAYON_CARTE = 16;
     private static final int RAYON_CHAMP = 8;
@@ -282,7 +298,7 @@ public class Login extends javax.swing.JFrame {
                         break;
                     case IDENTIFIANTS_INCORRECTS:
                         JOptionPane.showMessageDialog(Login.this,
-                                "Adresse e-mail ou mot de passe incorrect.");
+                                "Nom d'utilisateur ou mot de passe incorrect.");
                         txtPassword.selectAll();
                         txtPassword.requestFocusInWindow();
                         break;
@@ -489,7 +505,7 @@ public class Login extends javax.swing.JFrame {
         // Textes definitifs de l'ecran.
         jLabel1.setText("SmartPark");
         jLabel2.setText("Edition Entreprise");
-        jLabel3.setText("IDENTIFIANT / ADRESSE E-MAIL");
+        jLabel3.setText("NOM D'UTILISATEUR");
         jLabel4.setText("MOT DE PASSE");
         btnconnexion.setText("Se connecter");
 
@@ -793,7 +809,7 @@ public class Login extends javax.swing.JFrame {
         int ligne = 0;
 
         entete.add(aGauche(new Etiquette("Poste de controle #01 - Entree Principale",
-                new Color(0xF1F5F9), BORDURE_CHAMP, LABEL, BLEU, police(Font.BOLD, 12), 6)),
+                BORDURE_CLAIR, BORDURE_CHAMP, LABEL, BLEU, police(Font.BOLD, 12), 6)),
                 parametreLigne(ligne++, new Insets(0, 0, 14, 0), false));
 
         JLabel titre = new JLabel("Connexion au poste");
@@ -821,7 +837,7 @@ public class Login extends javax.swing.JFrame {
         ajouterLigne(form, jLabel3, ligne++, new Insets(0, 0, 6, 0));
 
         ChampSaisie champEmail = new ChampSaisie(txtEmail,
-                new Icone(Icone.Type.EMAIL, 18, ICONE_GREY), null);
+                new Icone(Icone.Type.UTILISATEUR, 18, ICONE_GREY), null);
         ajouterLigne(form, champEmail, ligne++, new Insets(0, 0, 20, 0));
 
         JPanel ligneMotDePasse = new JPanel(new BorderLayout());
@@ -850,13 +866,13 @@ public class Login extends javax.swing.JFrame {
         JPanel pied = new JPanel(new BorderLayout());
         pied.setOpaque(false);
         pied.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xF1F5F9)),
+                BorderFactory.createMatteBorder(1, 0, 0, 0, BORDURE_CLAIR),
                 BorderFactory.createEmptyBorder(16, 0, 16, 0)));
 
         JPanel gauche = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         gauche.setOpaque(false);
         gauche.add(new PointColor(new Color(0x10B981), 8));
-        gauche.add(texte(12, Font.PLAIN, new Color(0x475569),
+        gauche.add(texte(12, Font.PLAIN, util.Theme.SECONDAIRE_HOVER,
                 "SmartPark Desktop v4.2 - PostgreSQL Connecte"));
         pied.add(gauche, BorderLayout.WEST);
         pied.add(texte(12, Font.PLAIN, new Color(0x94A3B8), "POOL: 12/12"),
@@ -1233,7 +1249,7 @@ public class Login extends javax.swing.JFrame {
 
             int w = getWidth();
             int h = getHeight();
-            g2.setColor(actif ? Color.WHITE : CHAMP_FOND);
+            g2.setColor(actif ? CARTE : CHAMP_FOND);
             g2.fillRoundRect(0, 0, w, h, RAYON_CHAMP, RAYON_CHAMP);
 
             if (actif) {

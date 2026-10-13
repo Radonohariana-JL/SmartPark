@@ -1725,7 +1725,7 @@ public class ParametreForm extends JPanel {
             Color fond;
             Color texte = type == Type.NEUTRE ? LABEL : Color.WHITE;
             if (!m.isEnabled()) {
-                fond = new Color(0xE2E8F0);
+                fond = Theme.estSombre() ? new Color(0x334155) : new Color(0xE2E8F0);
                 texte = new Color(0x94A3B8);
             } else if (m.isPressed() || m.isArmed()) {
                 fond = type == Type.PRIMAIRE ? PRIMAIRE_PRESSED : BORDURE;

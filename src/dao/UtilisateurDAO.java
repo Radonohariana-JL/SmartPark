@@ -14,21 +14,23 @@ import util.MotDePasse;
 public class UtilisateurDAO {
 
     /**
-     * Verifie l'email et le mot de passe (hachage SHA-256).
-     * Retourne l'utilisateur connecte, ou null si l'identification echoue.
+     * Verifie le nom d'utilisateur (ou l'adresse email) et le mot de passe
+     * (hachage SHA-256). Retourne l'utilisateur connecte, ou null si
+     * l'identification echoue.
      * NB : une base indisponible renvoie aussi null ; distinguer avec
      * {@link DBConnection#estDisponible()}.
      */
-    public Utilisateur verifier(String email, String motDePasse) {
+    public Utilisateur verifier(String identifiant, String motDePasse) {
         String sql = "SELECT id_utilisateur, nom, email, mot_de_passe, role "
-                + "FROM utilisateur WHERE email = ?";
+                + "FROM utilisateur WHERE email = ? OR nom = ?";
 
         try (Connection con = DBConnection.getConnection()) {
             if (con == null) {
                 return null;
             }
             try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, email);
+                ps.setString(1, identifiant);
+                ps.setString(2, identifiant);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         return null;

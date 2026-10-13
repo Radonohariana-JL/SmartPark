@@ -15,6 +15,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import util.Theme;
 
 /**
  * Statistiques : vehicules gares, places libres, stationnements et
@@ -33,40 +34,73 @@ public class StatistiqueForm extends JPanel {
 
     public StatistiqueForm() {
         setLayout(new BorderLayout());
+        Theme.addEcouteur(this::reconstruire);
+        reconstruire();
+        actualiser();
+    }
+
+    private void reconstruire() {
+        removeAll();
+        setOpaque(true);
+        setBackground(Theme.FOND);
         add(creerIndicateurs(), BorderLayout.NORTH);
         add(creerGraphique(), BorderLayout.CENTER);
-        actualiser();
+        revalidate();
+        repaint();
+    }
+
+    private static Color couleurCarte() {
+        return Theme.estSombre() ? new Color(0x1E293B) : new Color(240, 244, 248);
+    }
+
+    private static Color bordureCarte() {
+        return Theme.estSombre() ? new Color(0x334155) : new Color(203, 213, 225);
+    }
+
+    private static Color couleurTexte() {
+        return Theme.estSombre() ? new Color(0xF1F5F9) : new Color(0x0F172A);
     }
 
     private JPanel creerIndicateurs() {
         JPanel grille = new JPanel(new GridLayout(1, 4, 10, 10));
+        grille.setOpaque(false);
         grille.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         grille.add(creerCarte("Vehicules actuellement gares", lblGares));
         grille.add(creerCarte("Places disponibles", lblLibres));
         grille.add(creerCarte("Stationnements aujourd'hui", lblAujourdhui));
-        grille.add(creerCarte("Recettes aujourd'hui (Ar)", lblRecettes));
+        grille.add(creerCarte("Recettes aujourd'hui", lblRecettes));
         return grille;
     }
 
     private JPanel creerCarte(String titre, JLabel valeur) {
         JPanel carte = new JPanel(new BorderLayout());
-        carte.setBackground(new Color(240, 244, 248));
-        carte.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225)));
+        carte.setOpaque(true);
+        carte.setBackground(couleurCarte());
+        carte.setBorder(BorderFactory.createLineBorder(bordureCarte()));
 
         JLabel lblTitre = new JLabel(titre, SwingConstants.CENTER);
         lblTitre.setFont(new Font("Arial", Font.BOLD, 12));
+        lblTitre.setForeground(couleurTexte());
         carte.add(lblTitre, BorderLayout.NORTH);
 
         valeur.setFont(new Font("Arial", Font.BOLD, 22));
+        valeur.setForeground(couleurTexte());
         carte.add(valeur, BorderLayout.CENTER);
         return carte;
     }
 
     private JPanel creerGraphique() {
         JPanel pan = new JPanel(new BorderLayout());
+        pan.setOpaque(true);
+        pan.setBackground(Theme.FOND);
         pan.setBorder(BorderFactory.createTitledBorder(
-                "Recettes par jour (7 derniers jours)"));
+                BorderFactory.createLineBorder(bordureCarte()),
+                "Recettes par jour (7 derniers jours)",
+                javax.swing.border.TitledBorder.CENTER,
+                javax.swing.border.TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 12),
+                Theme.estSombre() ? new Color(0x94A3B8) : new Color(0x0F172A)));
         graphique.setPreferredSize(new Dimension(600, 300));
         pan.add(graphique, BorderLayout.CENTER);
         return pan;
@@ -98,6 +132,8 @@ public class StatistiqueForm extends JPanel {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
+            g2.setColor(Theme.FOND);
+            g2.fillRect(0, 0, getWidth(), getHeight());
             g2.setStroke(new BasicStroke(2));
 
             int largeur = getWidth();
@@ -112,7 +148,7 @@ public class StatistiqueForm extends JPanel {
             }
 
             // Axes
-            g2.setColor(Color.DARK_GRAY);
+            g2.setColor(Theme.estSombre() ? new Color(0x94A3B8) : Color.DARK_GRAY);
             g2.drawLine(margeGauche, margeHaut, margeGauche, hauteur - margeBas);
             g2.drawLine(margeGauche, hauteur - margeBas, largeur - 10, hauteur - margeBas);
 
@@ -129,11 +165,11 @@ public class StatistiqueForm extends JPanel {
                 int yBarre = hauteur - margeBas - symboleHauteur;
 
                 // Barre
-                g2.setColor(new Color(37, 99, 235));
+                g2.setColor(Theme.estSombre() ? new Color(0x3B82F6) : new Color(37, 99, 235));
                 g2.fillRect(x, yBarre, (int) largeurBarre, symboleHauteur);
 
                 // Pourcentage du montant au-dessus de la barre
-                g2.setColor(Color.BLACK);
+                g2.setColor(Theme.estSombre() ? new Color(0xF1F5F9) : Color.BLACK);
                 g2.drawString(String.valueOf((int) montant),
                         x, yBarre - 5);
 

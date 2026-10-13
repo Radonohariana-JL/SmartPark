@@ -495,7 +495,7 @@ public class HistoriqueForm extends JPanel {
             Color fond;
             Color texte;
             if (!modele.isEnabled()) {
-                fond = new Color(0xE2E8F0);
+                fond = Theme.estSombre() ? new Color(0x334155) : new Color(0xE2E8F0);
                 texte = new Color(0x94A3B8);
             } else if (modele.isPressed() || modele.isArmed()) {
                 fond = couleurEnfoncee();
