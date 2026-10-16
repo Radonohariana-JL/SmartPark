@@ -523,9 +523,13 @@ public class Login extends javax.swing.JFrame {
 
         // Fenetre.
         setTitle("SmartPark - Connexion");
+        java.awt.Image logoFenetre = util.Logo.image();
+        if (logoFenetre != null) {
+            setIconImage(logoFenetre);
+        }
         setResizable(true);
-        setMinimumSize(new Dimension(1088, 760));
-        setSize(new Dimension(1120, 800));
+        setMinimumSize(new Dimension(1088, 840));
+        setSize(new Dimension(1120, 860));
         setLocationRelativeTo(null);
     }
 
@@ -565,9 +569,9 @@ public class Login extends javax.swing.JFrame {
     private JComponent creerCarte() {
         CarteConnexion carte = new CarteConnexion();
         carte.setLayout(new GridLayout(1, 2, 0, 0));
-        carte.setPreferredSize(new Dimension(LARGEUR_CARTE, 576));
-        carte.setMinimumSize(new Dimension(LARGEUR_CARTE, 576));
-        carte.setMaximumSize(new Dimension(LARGEUR_CARTE, 576));
+        carte.setPreferredSize(new Dimension(LARGEUR_CARTE, 660));
+        carte.setMinimumSize(new Dimension(LARGEUR_CARTE, 660));
+        carte.setMaximumSize(new Dimension(LARGEUR_CARTE, 660));
         carte.add(creerVoletGauche());
         carte.add(creerVoletDroit());
         return carte;
@@ -621,31 +625,32 @@ public class Login extends javax.swing.JFrame {
         volet.setOpaque(false);
         volet.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
-        // En-tete : logo + nom de la marque, badge d'etat a droite.
-        JPanel entete = new JPanel(new BorderLayout(12, 0));
+        // En-tete : badge d'etat en haut a droite, logo agrandi centre sur toute
+        // la largeur, puis sous-titre centre sous le logo. Le titre "SmartPark"
+        // est retire : le logo contient deja le nom de la marque.
+        JPanel entete = new JPanel();
         entete.setOpaque(false);
+        entete.setLayout(new BoxLayout(entete, BoxLayout.Y_AXIS));
 
-        JPanel marque = new JPanel(new BorderLayout(14, 0));
-        marque.setOpaque(false);
-        marque.add(new PanneauLogo(), BorderLayout.WEST);
+        JPanel ligneBadge = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        ligneBadge.setOpaque(false);
+        ligneBadge.setAlignmentX(Component.CENTER_ALIGNMENT);
+        ligneBadge.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        ligneBadge.add(new Etiquette("SYSTEME OPERATIONNEL",
+                new Color(0x052E22), new Color(0x14532D), VERT, new Color(0x34D399),
+                police(Font.BOLD, 12), 999));
+        entete.add(ligneBadge);
 
-        JPanel textes = new JPanel();
-        textes.setOpaque(false);
-        textes.setLayout(new BoxLayout(textes, BoxLayout.Y_AXIS));
-        jLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        jLabel1.setFont(police(Font.BOLD, 24));
-        jLabel1.setForeground(TEXTE_CLAIR);
-        textes.add(jLabel1);
-        jLabel2.setAlignmentX(Component.LEFT_ALIGNMENT);
+        PanneauLogo logo = new PanneauLogo();
+        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        entete.add(logo);
+        entete.add(Box.createVerticalStrut(4));
+
+        jLabel2.setAlignmentX(Component.CENTER_ALIGNMENT);
         jLabel2.setFont(police(Font.PLAIN, 12));
         jLabel2.setForeground(TEXTE_CLAIR_2);
-        textes.add(jLabel2);
-        marque.add(textes, BorderLayout.CENTER);
+        entete.add(jLabel2);
 
-        entete.add(marque, BorderLayout.WEST);
-        entete.add(aGauche(new Etiquette("SYSTEME OPERATIONNEL",
-                new Color(0x052E22), new Color(0x14532D), VERT, new Color(0x34D399),
-                police(Font.BOLD, 12), 999)), BorderLayout.EAST);
         volet.add(entete, BorderLayout.NORTH);
 
         // Corps : accroche + carte de telemetrie.
@@ -1164,14 +1169,14 @@ public class Login extends javax.swing.JFrame {
         }
     }
 
-    /** Carre logo de la marque : degrade bleu vers cyan + icone parking. */
+    /** Logo officiel de la marque, charge depuis les ressources du projet. */
     private static class PanneauLogo extends JPanel {
 
         PanneauLogo() {
             setOpaque(false);
-            setPreferredSize(new Dimension(48, 48));
-            setMinimumSize(new Dimension(48, 48));
-            setMaximumSize(new Dimension(48, 48));
+            setPreferredSize(new Dimension(100, 100));
+            setMinimumSize(new Dimension(100, 100));
+            setMaximumSize(new Dimension(100, 100));
         }
 
         @Override
@@ -1179,14 +1184,16 @@ public class Login extends javax.swing.JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-            int w = getWidth();
-            int h = getHeight();
-            g2.setPaint(new GradientPaint(0, h, BLEU, w, 0, CYAN));
-            g2.fillRoundRect(0, 0, w - 1, h - 1, 12, 12);
-
-            Icone icone = new Icone(Icone.Type.PARKING, 26, Color.WHITE);
-            icone.paintIcon(this, g2, (w - 26) / 2, (h - 26) / 2);
+            java.awt.Image logo = util.Logo.image();
+            if (logo != null) {
+                // Le logo est carre : on le centre sans deformer les proportions.
+                int cote = Math.min(getWidth(), getHeight());
+                g2.drawImage(logo, (getWidth() - cote) / 2, (getHeight() - cote) / 2,
+                        cote, cote, this);
+            }
             g2.dispose();
         }
     }

@@ -233,6 +233,10 @@ public class Dashboard extends JFrame {
 
     private void construireFenetre() {
         setTitle(I18n.t("app.title", "SmartPark - Gestion de parking"));
+        java.awt.Image logoFenetre = util.Logo.image();
+        if (logoFenetre != null) {
+            setIconImage(logoFenetre);
+        }
         setSize(1280, 720);
         setMinimumSize(new Dimension(1180, 690));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -250,34 +254,28 @@ public class Dashboard extends JFrame {
         menu.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, MENU_BORDURE));
         menu.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // --- En-tete (h-20 = 80) : logo + titres centres verticalement ---
-        JPanel entete = new JPanel(new BorderLayout());
+        // --- En-tete : logo agrandi, centre sur toute la largeur, puis sous-titre ---
+        JPanel entete = new JPanel();
         entete.setOpaque(true);
         entete.setBackground(MENU_FOND);
-        entete.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));
-        entete.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-        entete.setPreferredSize(new Dimension(LARGEUR_MENU, 80));
+        entete.setLayout(new BoxLayout(entete, BoxLayout.Y_AXIS));
+        // Marge haute plus genereuse : le logo est legerement abaisse dans la navbar.
+        entete.setBorder(BorderFactory.createEmptyBorder(20, 16, 12, 16));
+        entete.setMaximumSize(new Dimension(Integer.MAX_VALUE, 132));
+        entete.setPreferredSize(new Dimension(LARGEUR_MENU, 132));
         entete.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel ligne = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        ligne.setOpaque(false);
-        ligne.add(new CarreLogo());
+        CarreLogo carreLogo = new CarreLogo();
+        carreLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        entete.add(carreLogo);
+        entete.add(Box.createVerticalStrut(8));
 
-        JPanel titres = new JPanel();
-        titres.setOpaque(false);
-        titres.setLayout(new BoxLayout(titres, BoxLayout.Y_AXIS));
-        JLabel titre = new JLabel("SmartPark");
-        titre.setFont(police(Font.BOLD, 16));
-        titre.setForeground(MENU_TEXTE_ACTIF);
-        titre.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titres.add(titre);
+        // Le titre "SmartPark" est retire : le logo contient deja le nom de la marque.
         labelSousTitreMenu = new JLabel(I18n.t("menu.sous_titre", "GESTION DE PARKING"));
         labelSousTitreMenu.setFont(police(Font.BOLD, 11));
         labelSousTitreMenu.setForeground(MENU_TEXTE);
-        labelSousTitreMenu.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titres.add(labelSousTitreMenu);
-        ligne.add(titres);
-        entete.add(ligne, BorderLayout.CENTER);
+        labelSousTitreMenu.setAlignmentX(Component.CENTER_ALIGNMENT);
+        entete.add(labelSousTitreMenu);
 
         menu.add(entete);
 
@@ -1609,14 +1607,14 @@ public class Dashboard extends JFrame {
         }
     }
 
-    /** Carre logo du menu (fond MENU_ACTIF + local_parking blanc). */
+    /** Logo officiel du menu, charge depuis les ressources du projet. */
     private static class CarreLogo extends JPanel {
 
         CarreLogo() {
             setOpaque(false);
-            setPreferredSize(new Dimension(36, 36));
-            setMinimumSize(new Dimension(36, 36));
-            setMaximumSize(new Dimension(36, 36));
+            setPreferredSize(new Dimension(72, 72));
+            setMinimumSize(new Dimension(72, 72));
+            setMaximumSize(new Dimension(72, 72));
         }
 
         @Override
@@ -1624,10 +1622,16 @@ public class Dashboard extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(MENU_ACTIF);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            new Icone(Icone.Type.PARKING, 22, MENU_TEXTE_ACTIF)
-                    .paintIcon(this, g2, (getWidth() - 22) / 2, (getHeight() - 22) / 2);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+            java.awt.Image logo = util.Logo.image();
+            if (logo != null) {
+                // Le logo est carre : on le centre sans deformer les proportions.
+                int cote = Math.min(getWidth(), getHeight());
+                g2.drawImage(logo, (getWidth() - cote) / 2, (getHeight() - cote) / 2,
+                        cote, cote, this);
+            }
             g2.dispose();
         }
     }
